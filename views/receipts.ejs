@@ -85,19 +85,7 @@
 <body>
   <div class="container">
     <h1><i class="fas fa-receipt"></i> Receipts</h1>
-    <form action="/generate-receipts" method="POST">
-      <label for="patientName"><i class="fas fa-user"></i> Patient Name:</label>
-      <input type="text" name="patientName" id="patientName" required placeholder="Enter patient name">
-      <br>
-      <button type="submit"><i class="fas fa-check"></i> Generate Receipts</button>
-    </form>
     <% if (purchases && purchases.length > 0) { %>
-      <div style="text-align: center; margin-top: 20px;">
-        <a href="/download-pdf" style="background: #F59E0B; color: white; padding: 12px 25px; text-decoration: none; border-radius: 10px; font-size: 16px; display: inline-block;">
-          <i class="fas fa-download"></i> Download Combined Receipt PDF
-        </a>
-      </div>
-
       <h2 style="text-align: center; color: #4a5568; margin: 30px 0 20px 0;"><i class="fas fa-list"></i> Purchase Summary</h2>
 
       <div style="overflow-x: auto;">
@@ -127,6 +115,19 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <form action="/generate-receipts" method="POST" style="text-align: center; margin: 30px 0;">
+        <label for="patientName"><i class="fas fa-user"></i> Patient Name:</label>
+        <input type="text" name="patientName" id="patientName" required placeholder="Enter patient name">
+        <br>
+        <button type="submit" style="margin-top: 15px;"><i class="fas fa-check"></i> Generate Report</button>
+      </form>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="/download-pdf" style="background: #F59E0B; color: white; padding: 12px 25px; text-decoration: none; border-radius: 10px; font-size: 16px; display: inline-block;">
+          <i class="fas fa-download"></i> Download PDF
+        </a>
       </div>
     <% } %>
     <div style="text-align: center; margin-top: 30px;">
