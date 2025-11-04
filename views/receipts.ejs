@@ -74,6 +74,12 @@
       text-decoration: none;
       border-radius: 5px;
     }
+    .even-row {
+      background: #f8fafc;
+    }
+    .odd-row {
+      background: white;
+    }
   </style>
 </head>
 <body>
@@ -91,13 +97,37 @@
           <i class="fas fa-download"></i> Download Combined Receipt PDF
         </a>
       </div>
-      <ul>
-        <% purchases.forEach((purchase, index) => { %>
-          <li>
-            <span><i class="fas fa-pills"></i> <%= purchase.medicine %> - <%= purchase.quantity %> tablets</span>
-          </li>
-        <% }); %>
-      </ul>
+
+      <h2 style="text-align: center; color: #4a5568; margin: 30px 0 20px 0;"><i class="fas fa-list"></i> Purchase Summary</h2>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+          <thead>
+            <tr style="background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%); color: white;">
+              <th style="padding: 15px; text-align: left; font-weight: 600;"><i class="fas fa-pills"></i> Medicine</th>
+              <th style="padding: 15px; text-align: center; font-weight: 600;"><i class="fas fa-hashtag"></i> Tablets Bought</th>
+              <th style="padding: 15px; text-align: center; font-weight: 600;"><i class="fas fa-rupee-sign"></i> Price per Tablet</th>
+              <th style="padding: 15px; text-align: center; font-weight: 600;"><i class="fas fa-calculator"></i> Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% let grandTotal = 0; %>
+            <% purchases.forEach((purchase, index) => { %>
+              <% grandTotal += purchase.total; %>
+              <tr class="<%= index % 2 === 0 ? 'even-row' : 'odd-row' %>">
+                <td style="padding: 15px; font-weight: 500;"><%= purchase.medicine %></td>
+                <td style="padding: 15px; text-align: center;"><%= purchase.quantity %></td>
+                <td style="padding: 15px; text-align: center;">₹<%= purchase.pricePerTablet.toFixed(2) %></td>
+                <td style="padding: 15px; text-align: center; font-weight: 600;">₹<%= purchase.total.toFixed(2) %></td>
+              </tr>
+            <% }); %>
+            <tr style="background: linear-gradient(135deg, #10B981 0%, #34D399 100%); color: white; font-weight: 700; font-size: 18px;">
+              <td colspan="3" style="padding: 20px; text-align: right;">Grand Total:</td>
+              <td style="padding: 20px; text-align: center;">₹<%= grandTotal.toFixed(2) %></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     <% } %>
     <div style="text-align: center; margin-top: 30px;">
       <a href="/dashboard" style="background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%); color: white; padding: 12px 25px; text-decoration: none; border-radius: 10px; font-size: 16px; display: inline-block;">

@@ -239,19 +239,25 @@ app.post('/add-medicine', (req, res) => {
   const tablets = parseInt(tablets_in_a_strip);
 
   if (!medicine || medicine.trim() === '' || isNaN(qty) || qty <= 0 || isNaN(price) || price <= 0 || isNaN(tablets) || tablets <= 0) {
-    return res.send('Invalid input data. Please check all fields.');
+    return res.redirect('/dashboard?error=Invalid input data. Please check all fields.');
   }
 
   // Check if medicine already exists
   db.query('SELECT medicine FROM stock_available WHERE medicine = ?', [medicine], (err, results) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Error checking medicine existence:', err);
+      return res.redirect('/dashboard?error=Database error occurred. Please try again.');
+    }
     if (results.length > 0) {
-      return res.send('Medicine already exists. Use "Add Stock" to increase stock for existing medicines.');
+      return res.redirect('/dashboard?error=Medicine already exists. Use "Add Stock" to increase stock for existing medicines.');
     }
     // Insert new medicine with all details
-    db.query('INSERT INTO stock_available (medicine, stock, price_per_strip, tablets_in_a_strip) VALUES (?, ?, ?, ?)', [medicine, qty, price, tablets], (err) => {
-      if (err) throw err;
-      res.redirect('/dashboard');
+    db.query('INSERT INTO stock_available (medicine, stock, price_per_strip, tablets_in_a_strip, tablets_used_in_current_strip) VALUES (?, ?, ?, ?, 0)', [medicine, qty, price, tablets], (err) => {
+      if (err) {
+        console.error('Error adding medicine:', err);
+        return res.redirect('/dashboard?error=Failed to add medicine. Please try again.');
+      }
+      res.redirect('/dashboard?success=Medicine added successfully');
     });
   });
 });
@@ -260,9 +266,46 @@ app.get('/receipts', (req, res) => {
   if (!req.session.loggedin) {
     return res.redirect('/');
   }
-  res.render('receipts', {
-    purchases: req.session.purchases || []
-  });
+  const purchases = req.session.purchases || [];
+
+  // Fetch price details for each purchase
+  if (purchases.length > 0) {
+    let processedPurchases = [];
+    let completed = 0;
+
+    purchases.forEach((purchase, index) => {
+      db.query('SELECT price_per_strip, tablets_in_a_strip FROM stock_available WHERE medicine = ?', [purchase.medicine], (err, results) => {
+        if (err) {
+          console.error('Error fetching price for receipts:', err);
+          return;
+        }
+        if (results.length > 0) {
+          const pricePerStrip = results[0].price_per_strip;
+          const tabletsInStrip = results[0].tablets_in_a_strip;
+          const pricePerTablet = pricePerStrip / tabletsInStrip;
+          const total = purchase.quantity * pricePerTablet;
+
+          processedPurchases.push({
+            medicine: purchase.medicine,
+            quantity: purchase.quantity,
+            pricePerTablet: pricePerTablet,
+            total: total
+          });
+        }
+
+        completed++;
+        if (completed === purchases.length) {
+          res.render('receipts', {
+            purchases: processedPurchases
+          });
+        }
+      });
+    });
+  } else {
+    res.render('receipts', {
+      purchases: []
+    });
+  }
 });
 
 app.post('/generate-receipts', (req, res) => {
