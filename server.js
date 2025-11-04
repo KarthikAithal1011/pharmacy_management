@@ -328,54 +328,56 @@ app.get('/download-pdf', (req, res) => {
   doc.pipe(res);
 
   // Header with border
-  doc.rect(30, 30, 535, 80).stroke();
-  doc.moveTo(30, 70).lineTo(565, 70).stroke();
+  doc.rect(30, 30, 535, 100).stroke();
+  doc.moveTo(30, 80).lineTo(565, 80).stroke();
 
   // Pharmacy Header
-  doc.fontSize(20).font('Helvetica-Bold').text('PHARMACY MANAGEMENT SYSTEM', 0, 45, { align: 'center' });
-  doc.fontSize(10).font('Helvetica').text('123 Health Street, Wellness City, WC 12345', 0, 65, { align: 'center' });
-  doc.text('Phone: (123) 456-7890 | Email: info@pharmacypro.com', 0, 80, { align: 'center' });
+  doc.fontSize(20).font('Helvetica-Bold').text('COMMUNITY PHARMACY', 30, 45, { width: 535, align: 'center' });
+  doc.fontSize(10).font('Helvetica').text('123 Health Street, Wellness City, WC 12345', 30, 65, { width: 535, align: 'center' });
+  doc.text('Phone: (123) 456-7890 | Email: info@pharmacypro.com', 30, 90, { width: 535, align: 'center' });
 
   // Receipt Title
-  doc.moveDown(2);
-  doc.fontSize(16).font('Helvetica-Bold').text('RECEIPT', 0, doc.y, { align: 'center' });
-  doc.moveTo(200, doc.y + 15).lineTo(400, doc.y + 15).stroke();
+  doc.moveDown(3);
+  doc.fontSize(16).font('Helvetica-Bold');
+  const receiptText = 'RECEIPT';
+  const receiptWidth = doc.widthOfString(receiptText);
+  doc.text(receiptText, 0, doc.y, { align: 'center' });
+  const pageWidth = doc.page.width;
+  const startX = (pageWidth - receiptWidth) / 2;
+  const endX = (pageWidth + receiptWidth) / 2;
+  doc.moveTo(startX, doc.y).lineTo(endX, doc.y).stroke();
 
   // Receipt Details
-  doc.moveDown(1);
+  doc.moveDown(1.5);
   const today = new Date();
   const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
   const receiptNumber = `RCP-${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
-
   doc.fontSize(11).font('Helvetica');
   doc.text(`Receipt No: ${receiptNumber}`, 50, doc.y);
   doc.text(`Date: ${formattedDate}`, 400, doc.y);
-  doc.moveDown(0.5);
+  doc.moveDown(1);
   doc.text(`Patient Name: ${req.session.patientName || 'Walk-in Customer'}`, 50, doc.y);
   doc.text(`Time: ${today.toLocaleTimeString()}`, 400, doc.y);
-
   // Table Header
   doc.moveDown(2);
   const tableTop = doc.y;
-
   // Table border
-  doc.rect(50, tableTop, 495, 30).stroke();
-
+  doc.rect(40, tableTop, 510, 40).stroke();
   // Table headers with internal lines
   doc.fontSize(11).font('Helvetica-Bold');
-  doc.text('S.No', 60, tableTop + 8);
-  doc.text('Medicine Name', 100, tableTop + 8);
-  doc.text('Qty', 320, tableTop + 8);
-  doc.text('Rate', 370, tableTop + 8);
-  doc.text('Amount', 450, tableTop + 8);
+  doc.text('S.No', 45, tableTop + 20, { width: 30, align: 'center' });
+  doc.text('Medicine Name', 85, tableTop + 20, { width: 240, align: 'center' });
+  doc.text('Qty', 335, tableTop + 20, { width: 40, align: 'center' });
+  doc.text('Rate', 385, tableTop + 20, { width: 70, align: 'center' });
+  doc.text('Amount', 465, tableTop + 20, { width: 80, align: 'center' });
 
   // Vertical lines
-  doc.moveTo(95, tableTop).lineTo(95, tableTop + 30).stroke();
-  doc.moveTo(315, tableTop).lineTo(315, tableTop + 30).stroke();
-  doc.moveTo(365, tableTop).lineTo(365, tableTop + 30).stroke();
-  doc.moveTo(445, tableTop).lineTo(445, tableTop + 30).stroke();
+  doc.moveTo(80, tableTop).lineTo(80, tableTop + 40).stroke();
+  doc.moveTo(330, tableTop).lineTo(330, tableTop + 40).stroke();
+  doc.moveTo(380, tableTop).lineTo(380, tableTop + 40).stroke();
+  doc.moveTo(460, tableTop).lineTo(460, tableTop + 40).stroke();
 
-  let currentY = tableTop + 35;
+  let currentY = tableTop + 40;
   let grandTotal = 0;
   let itemCount = 0;
 
@@ -399,21 +401,21 @@ app.get('/download-pdf', (req, res) => {
       itemCount++;
 
       // Item row
-      const rowHeight = 25;
-      doc.rect(50, currentY - 5, 495, rowHeight).stroke();
+      const rowHeight = 30;
+      doc.rect(40, currentY - 5, 510, rowHeight).stroke();
 
       doc.fontSize(10).font('Helvetica');
-      doc.text(`${itemCount}`, 60, currentY);
-      doc.text(`${purchase.medicine}`, 100, currentY, { width: 200 });
-      doc.text(`${quantityTablets}`, 320, currentY);
-      doc.text(`₹${pricePerTablet.toFixed(2)}`, 370, currentY);
-      doc.text(`₹${total.toFixed(2)}`, 450, currentY);
+      doc.text(`${itemCount}`, 45, currentY + 10, { width: 30, align: 'center' });
+      doc.text(`${purchase.medicine}`, 85, currentY + 10, { width: 240, align: 'center' });
+      doc.text(`${quantityTablets}`, 335, currentY + 10, { width: 40, align: 'center' });
+      doc.text(`₹${pricePerTablet.toFixed(2)}`, 385, currentY + 10, { width: 70, align: 'center' });
+      doc.text(`₹${total.toFixed(2)}`, 465, currentY + 10, { width: 80, align: 'center' });
 
       // Vertical lines for row
-      doc.moveTo(95, currentY - 5).lineTo(95, currentY + 20).stroke();
-      doc.moveTo(315, currentY - 5).lineTo(315, currentY + 20).stroke();
-      doc.moveTo(365, currentY - 5).lineTo(365, currentY + 20).stroke();
-      doc.moveTo(445, currentY - 5).lineTo(445, currentY + 20).stroke();
+      doc.moveTo(80, currentY - 5).lineTo(80, currentY + 25).stroke();
+      doc.moveTo(330, currentY - 5).lineTo(330, currentY + 25).stroke();
+      doc.moveTo(380, currentY - 5).lineTo(380, currentY + 25).stroke();
+      doc.moveTo(460, currentY - 5).lineTo(460, currentY + 25).stroke();
 
       currentY += rowHeight;
 
@@ -439,7 +441,6 @@ app.get('/download-pdf', (req, res) => {
         doc.text('• Medicines once sold cannot be returned.', 50, doc.y + 10);
         doc.text('• Keep medicines out of reach of children.', 50, doc.y + 18);
         doc.text('• Consult your doctor before taking any medication.', 50, doc.y + 26);
-
         doc.end();
       }
     });
