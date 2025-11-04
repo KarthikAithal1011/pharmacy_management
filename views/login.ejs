@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pharmacy Management - Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+      color: #e2e8f0;
+    }
+    .login-container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #4a5568;
+      font-weight: 500;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    .input-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #4a5568;
+    }
+    input {
+      width: 100%;
+      padding: 15px 20px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      background: #f8fafc;
+    }
+    input:focus {
+      outline: none;
+      border-color: #F59E0B;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+    input::placeholder {
+      color: #a0aec0;
+    }
+    button {
+      padding: 15px;
+      background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+      font-weight: 700;
+      color: #F59E0B;
+    }
+    .error {
+      background: #fed7d7;
+      color: #c53030;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">🏥 PharmacyPro</div>
+    <h2>Welcome Back</h2>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="error"><%= error %></div>
+    <% } %>
+    <form action="/login" method="POST">
+      <div class="input-group">
+        <label for="username">Enter Username</label>
+        <input type="text" name="username" id="username" placeholder="Username" required>
+      </div>
+      <div class="input-group">
+        <label for="password">Enter Password</label>
+        <input type="password" name="password" id="password" placeholder="Password" required>
+      </div>
+      <button type="submit">Sign In</button>
+    </form>
+  </div>
+</body>
+</html>

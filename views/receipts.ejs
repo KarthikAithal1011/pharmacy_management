@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receipts - Pharmacy Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #4a5568;
+      margin-bottom: 30px;
+    }
+    form {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+    input {
+      padding: 10px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 16px;
+      width: 200px;
+    }
+    button {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: #f8fafc;
+      margin: 10px 0;
+      padding: 15px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    a {
+      background: #F59E0B;
+      color: white;
+      padding: 8px 15px;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fas fa-receipt"></i> Receipts</h1>
+    <form action="/generate-receipts" method="POST">
+      <label for="patientName"><i class="fas fa-user"></i> Patient Name:</label>
+      <input type="text" name="patientName" id="patientName" required placeholder="Enter patient name">
+      <br>
+      <button type="submit"><i class="fas fa-check"></i> Generate Receipts</button>
+    </form>
+    <% if (purchases && purchases.length > 0) { %>
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="/download-pdf" style="background: #F59E0B; color: white; padding: 12px 25px; text-decoration: none; border-radius: 10px; font-size: 16px; display: inline-block;">
+          <i class="fas fa-download"></i> Download Combined Receipt PDF
+        </a>
+      </div>
+      <ul>
+        <% purchases.forEach((purchase, index) => { %>
+          <li>
+            <span><i class="fas fa-pills"></i> <%= purchase.medicine %> - <%= purchase.quantity %> tablets</span>
+          </li>
+        <% }); %>
+      </ul>
+    <% } %>
+    <div style="text-align: center; margin-top: 30px;">
+      <a href="/dashboard" style="background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%); color: white; padding: 12px 25px; text-decoration: none; border-radius: 10px; font-size: 16px; display: inline-block;">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+  </div>
+</body>
+</html>

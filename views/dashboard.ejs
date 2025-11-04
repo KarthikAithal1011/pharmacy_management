@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pharmacy Management - Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 20px 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      animation: slideDown 0.5s ease-in-out;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    h1 {
+      color: #4a5568;
+      margin: 0;
+      font-weight: 700;
+    }
+    .welcome {
+      background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 25px;
+      font-weight: 500;
+      box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+    }
+    .search-container {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      animation: fadeIn 0.5s ease-in-out 0.2s both;
+    }
+    .search-container input {
+      padding: 12px 20px;
+      width: 300px;
+      border: 2px solid #e2e8f0;
+      border-radius: 25px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      background: #f8fafc;
+    }
+    .search-container input:focus {
+      outline: none;
+      border-color: #F59E0B;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+    .search-container button {
+      padding: 12px 25px;
+      background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .search-container button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
+    }
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 30px;
+    }
+    .main-content {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      overflow: hidden;
+      animation: fadeIn 0.5s ease-in-out 0.4s both;
+    }
+    h2 {
+      background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%);
+      color: white;
+      margin: 0;
+      padding: 20px 30px;
+      font-weight: 500;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 15px 20px;
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    th {
+      background: #f8fafc;
+      color: #4a5568;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    tr:hover {
+      background: #f8fafc;
+      transition: background 0.3s ease;
+    }
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .buy-form {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      animation: fadeIn 0.5s ease-in-out 0.6s both;
+    }
+    .buy-form h3 {
+      margin-top: 0;
+      color: #4a5568;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    .buy-form label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #4a5568;
+    }
+    .buy-form select, .buy-form input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      background: #f8fafc;
+      margin-bottom: 15px;
+    }
+    .buy-form select:focus, .buy-form input:focus {
+      outline: none;
+      border-color: #F59E0B;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+    .buy-form button {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .buy-form button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
+    }
+    .logout {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      text-align: center;
+      animation: fadeIn 0.5s ease-in-out 0.8s both;
+    }
+    .logout a {
+      display: inline-block;
+      padding: 12px 25px;
+      background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 25px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .logout a:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(245, 101, 101, 0.3);
+    }
+    @media (max-width: 768px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+      .header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+      .search-container {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .search-container input {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-pills"></i> PharmacyPro Dashboard</h1>
+      <div class="welcome">
+        <i class="fas fa-user"></i> Welcome, <%= username %>!
+      </div>
+    </div>
+
+    <div class="search-container">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search for medicine...">
+      <button id="searchButton">
+        <i class="fas fa-search"></i> Search
+      </button>
+    </div>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div style="background: #fee2e2; color: #dc2626; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 6px solid #dc2626; font-size: 18px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 38, 38, 0.2);">
+        <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i> <strong style="font-size: 20px;">Error:</strong> <%= error %>
+      </div>
+    <% } %>
+
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div style="background: #d1fae5; color: #059669; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 6px solid #059669; font-size: 18px; font-weight: bold; box-shadow: 0 4px 8px rgba(5, 150, 105, 0.2);">
+        <i class="fas fa-check-circle" style="font-size: 24px;"></i> <strong style="font-size: 20px;">Success:</strong> <%= success %>
+      </div>
+    <% } %>
+
+    <div class="content-grid">
+      <div class="main-content">
+        <h2><i class="fas fa-list"></i> Medicines and Stocks Available</h2>
+        <table>
+          <thead>
+            <tr>
+              <th><i class="fas fa-pills"></i> Medicine</th>
+              <th><i class="fas fa-boxes"></i> Stock (Strips)</th>
+              <th><i class="fas fa-tags"></i> Price per Strip</th>
+              <th><i class="fas fa-tablets"></i> Tablets per Strip</th>
+              <th><i class="fas fa-rupee-sign"></i> Price per Tablet</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% medicines.forEach(medicine => { %>
+              <tr>
+                <td><%= medicine.medicine %></td>
+                <td><%= medicine.stock > 0 ? medicine.stock : 'Out of Stock' %></td>
+                <td>₹<%= medicine.price_per_strip %></td>
+                <td><%= medicine.tablets_in_a_strip %></td>
+                <td>₹<%=(medicine.price_per_strip / medicine.tablets_in_a_strip).toFixed(2) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sidebar">
+        <form action="/add-to-cart" method="POST" class="buy-form">
+          <h3><i class="fas fa-shopping-cart"></i> Add to Cart</h3>
+          <label for="medicine"><i class="fas fa-pills"></i> Search Medicine:</label>
+          <input type="text" name="medicine" id="medicine" list="medicines-list" required placeholder="Type to search medicine">
+          <datalist id="medicines-list">
+            <% medicines.forEach(medicine => { %>
+              <option value="<%= medicine.medicine %>">
+            <% }); %>
+          </datalist>
+          <label for="quantity"><i class="fas fa-hashtag"></i> Quantity (Tablets):</label>
+          <input type="number" name="quantity" id="quantity" min="1" required>
+          <button type="submit">
+            <i class="fas fa-cart-plus"></i> Add to Cart
+          </button>
+          <button type="button" id="add-more" style="margin-top: 10px; background: #10B981;">
+            <i class="fas fa-plus"></i> Add More Medicines
+          </button>
+        </form>
+
+        <div class="cart-section" style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 20px;">
+          <h3><i class="fas fa-shopping-basket"></i> Cart (<%= purchases.length %> items)</h3>
+          <% if (purchases && purchases.length > 0) { %>
+            <div style="margin-bottom: 15px; text-align: right;">
+              <form action="/clear-cart" method="POST" style="display: inline;">
+                <button type="submit" style="background: #6b7280; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                  <i class="fas fa-trash"></i> Clear Cart
+                </button>
+              </form>
+            </div>
+            <ul style="list-style: none; padding: 0;">
+              <% purchases.forEach((purchase, index) => { %>
+                <li style="padding: 10px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+                  <span><%= purchase.medicine %> - <%= purchase.quantity %> tablets</span>
+                  <form action="/remove-from-cart" method="POST" style="display: inline;">
+                    <input type="hidden" name="index" value="<%= index %>">
+                    <button type="submit" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Remove</button>
+                  </form>
+                </li>
+              <% }); %>
+            </ul>
+            <form action="/buy" method="POST" style="margin-top: 15px;">
+              <button type="submit" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                <i class="fas fa-credit-card"></i> Checkout & Generate Receipts
+              </button>
+            </form>
+          <% } else { %>
+            <p style="text-align: center; color: #666;">Your cart is empty. Add some medicines!</p>
+          <% } %>
+        </div>
+
+        <form action="/add-stock" method="POST" class="buy-form">
+          <h3><i class="fas fa-plus-circle"></i> Add Stock to Existing Medicine</h3>
+          <label for="add-stock-medicine"><i class="fas fa-pills"></i> Select Medicine:</label>
+          <select name="medicine" id="add-stock-medicine" required>
+            <option value="">Choose a medicine...</option>
+            <% medicines.forEach(medicine => { %>
+              <option value="<%= medicine.medicine %>"><%= medicine.medicine %> (Current Stock: <%= medicine.stock %> strips)</option>
+            <% }); %>
+          </select>
+          <label for="add-stock-quantity"><i class="fas fa-hashtag"></i> Additional Quantity (Strips):</label>
+          <input type="number" name="quantity" id="add-stock-quantity" min="1" required>
+          <button type="submit">
+            <i class="fas fa-plus"></i> Add Stock
+          </button>
+        </form>
+
+        <form action="/add-medicine" method="POST" class="buy-form">
+          <h3><i class="fas fa-plus-circle"></i> Add New Medicine</h3>
+          <label for="add-medicine-name"><i class="fas fa-pills"></i> Medicine Name:</label>
+          <input type="text" name="medicine" id="add-medicine-name" required placeholder="Enter new medicine name">
+          <label for="add-medicine-quantity"><i class="fas fa-hashtag"></i> Initial Quantity (Strips):</label>
+          <input type="number" name="quantity" id="add-medicine-quantity" min="1" required>
+          <label for="add-medicine-price"><i class="fas fa-rupee-sign"></i> Price per Strip (₹):</label>
+          <input type="number" name="price_per_strip" id="add-medicine-price" min="0.01" step="0.01" required placeholder="e.g., 50.00">
+          <label for="add-medicine-tablets"><i class="fas fa-tablets"></i> Tablets per Strip:</label>
+          <input type="number" name="tablets_in_a_strip" id="add-medicine-tablets" min="1" required placeholder="e.g., 10">
+          <button type="submit">
+            <i class="fas fa-plus"></i> Add New Medicine
+          </button>
+        </form>
+
+        <div class="logout">
+          <a href="/logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.getElementById('searchButton').addEventListener('click', function() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('tbody tr');
+      rows.forEach(row => {
+        const medicineName = row.cells[0].textContent.toLowerCase();
+        if (medicineName.includes(searchTerm)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+
+    document.getElementById('add-more').addEventListener('click', function() {
+      // Clear the form fields
+      document.getElementById('medicine').value = '';
+      document.getElementById('quantity').value = '';
+      // Optionally, show a message or focus on the medicine field
+      document.getElementById('medicine').focus();
+    });
+  </script>
+</body>
+</html>
