@@ -105,9 +105,7 @@
             </tr>
           </thead>
           <tbody>
-            <% let grandTotal = 0; %>
             <% purchases.forEach((purchase, index) => { %>
-              <% grandTotal += purchase.total; %>
               <tr class="<%= index % 2 === 0 ? 'even-row' : 'odd-row' %>">
                 <td style="padding: 15px; font-weight: 500;"><%= purchase.medicine %></td>
                 <td style="padding: 15px; text-align: center;"><%= purchase.quantity %></td>
@@ -116,8 +114,18 @@
               </tr>
             <% }); %>
             <tr style="background: linear-gradient(135deg, #10B981 0%, #34D399 100%); color: white; font-weight: 700; font-size: 18px;">
-              <td colspan="3" style="padding: 20px; text-align: right;">Grand Total:</td>
+              <td colspan="3" style="padding: 20px; text-align: right;">Subtotal:</td>
               <td style="padding: 20px; text-align: center;">₹<%= grandTotal.toFixed(2) %></td>
+            </tr>
+            <% if (discountPercent > 0) { %>
+            <tr style="background: linear-gradient(135deg, #10B981 0%, #34D399 100%); color: white; font-weight: 700; font-size: 16px;">
+              <td colspan="3" style="padding: 15px; text-align: right;">Discount (<%= discountPercent %>%):</td>
+              <td style="padding: 15px; text-align: center;">-₹<%= discountAmount.toFixed(2) %></td>
+            </tr>
+            <% } %>
+            <tr style="background: linear-gradient(135deg, #10B981 0%, #34D399 100%); color: white; font-weight: 700; font-size: 18px;">
+              <td colspan="3" style="padding: 20px; text-align: right;">Total Amount:</td>
+              <td style="padding: 20px; text-align: center;">₹<%= discountedTotal.toFixed(2) %></td>
             </tr>
           </tbody>
         </table>
@@ -137,7 +145,7 @@
       </div>
     <% } %>
     <div style="text-align: center; margin-top: 30px;">
-      <a href="/dashboard" style="background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%); color: white; padding: 12px 25px; text-decoration: none; border-radius: 10px; font-size: 16px; display: inline-block;">
+      <a href="/dashboard?clear=true" style="background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%); color: white; padding: 12px 25px; text-decoration: none; border-radius: 10px; font-size: 16px; display: inline-block;">
         <i class="fas fa-arrow-left"></i> Back to Dashboard
       </a>
     </div>

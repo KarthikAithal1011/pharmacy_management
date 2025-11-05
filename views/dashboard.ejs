@@ -219,6 +219,18 @@
       transform: translateY(-2px);
       box-shadow: 0 5px 15px rgba(245, 101, 101, 0.3);
     }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+    .alert-text {
+      animation: pulse 1s infinite, blink 1s infinite;
+    }
     @media (max-width: 768px) {
       .content-grid {
         grid-template-columns: 1fr;
@@ -238,10 +250,10 @@
     }
   </style>
 </head>
-<body>
+<body data-clear-local-storage="<%= typeof clearLocalStorage !== 'undefined' && clearLocalStorage ? 'true' : 'false' %>">
   <div class="container">
     <div class="header">
-      <h1><i class="fas fa-pills"></i> PharmacyPro Dashboard</h1>
+      <h1><i class="fas fa-pills"></i> Community Pharmacy Dashboard</h1>
       <div class="welcome">
         <i class="fas fa-user"></i> Welcome, <%= username %>!
       </div>
@@ -283,8 +295,13 @@
           <tbody>
             <% medicines.forEach(medicine => { %>
               <tr>
-                <td><%= medicine.medicine %> <% if (medicine.stock < 10 && medicine.stock > 0) { %> <span style="color: red; font-size: 14px; font-weight: bold;">(Low Stock)</span> <% } %></td>
-                <td><%- medicine.stock > 0 ? medicine.stock : '<span style="color: red; font-weight: bold;">Out of Stock</span>' %></td>
+                <td>
+                  <%= medicine.medicine %>
+                  <% if (medicine.stock < 10 && medicine.stock > 0) { %>
+                    <br><span class="alert-text" style="color: red; font-size: 14px; font-weight: bold;">(Low Stock)</span>
+                  <% } %>
+                </td>
+                <td><%- medicine.stock > 0 ? medicine.stock : '<span class="alert-text" style="color: red; font-weight: bold;">Out of Stock</span>' %></td>
                 <td>₹<%= medicine.price_per_strip %></td>
                 <td><%= medicine.tablets_in_a_strip %></td>
                 <td>₹<%=(medicine.price_per_strip / medicine.tablets_in_a_strip).toFixed(2) %></td>
@@ -298,14 +315,14 @@
         <form action="/add-to-cart" method="POST" class="buy-form">
           <h3><i class="fas fa-shopping-cart"></i> Add to Cart</h3>
           <label for="medicine"><i class="fas fa-pills"></i> Search Medicine:</label>
-          <input type="text" name="medicine" id="medicine" list="medicines-list" required placeholder="Type to search medicine" value="<%= typeof formData !== 'undefined' && formData.medicine ? formData.medicine : '' %>">
+          <input type="text" name="medicine" id="medicine" list="medicines-list" required placeholder="Type to search medicine" value="<%= typeof formData !== 'undefined' && formData.medicine && !clearForm ? formData.medicine : '' %>">
           <datalist id="medicines-list">
             <% medicines.forEach(medicine => { %>
               <option value="<%= medicine.medicine %>">
             <% }); %>
           </datalist>
           <label for="quantity"><i class="fas fa-hashtag"></i> Quantity (Tablets):</label>
-          <input type="number" name="quantity" id="quantity" min="1" required value="<%= typeof formData !== 'undefined' && formData.quantity ? formData.quantity : '' %>">
+          <input type="number" name="quantity" id="quantity" min="1" required value="<%= typeof formData !== 'undefined' && formData.quantity && !clearForm ? formData.quantity : '' %>">
           <button type="submit">
             <i class="fas fa-cart-plus"></i> Add to Cart
           </button>
@@ -409,6 +426,11 @@
 
     // Load saved form values from localStorage
     window.addEventListener('load', function() {
+      const clearLocalStorage = document.body.dataset.clearLocalStorage === 'true';
+      if (clearLocalStorage) {
+        localStorage.removeItem('medicine');
+        localStorage.removeItem('quantity');
+      }
       const savedMedicine = localStorage.getItem('medicine');
       const savedQuantity = localStorage.getItem('quantity');
       if (savedMedicine) document.getElementById('medicine').value = savedMedicine;

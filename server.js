@@ -64,6 +64,7 @@ app.post('/login', (req, res) => {
     if (results.length > 0) {
       req.session.loggedin = true;
       req.session.username = username;
+      req.session.formData = {}; // Clear form data on login
       res.redirect('/dashboard');
     } else {
       res.render('login', { error: 'Incorrect username or password.' });
@@ -73,11 +74,17 @@ app.post('/login', (req, res) => {
 
 app.get('/dashboard', (req, res) => {
   if (req.session.loggedin) {
+    // Clear form data if clear=true is in query or if no error/cartError and not clearing cart
+    let clearLocalStorage = false;
+    if (req.query.clear === 'true' || (!req.query.error && !req.query.cartError && req.query.success !== 'Cart cleared')) {
+      req.session.formData = {};
+      clearLocalStorage = true;
+    }
     // Fetch from stock_available table
     db.query('SELECT * FROM stock_available', (err, results) => {
       if (err) {
         console.error('Error fetching stock:', err);
-        res.render('dashboard', { username: req.session.username, medicines: [], purchases: req.session.purchases || [], error: null, success: null, cartError: null, formData: req.session.formData || {} });
+        res.render('dashboard', { username: req.session.username, medicines: [], purchases: req.session.purchases || [], error: null, success: null, cartError: null, formData: req.session.formData || {}, clearLocalStorage: clearLocalStorage });
       } else {
         res.render('dashboard', {
           username: req.session.username,
@@ -86,7 +93,9 @@ app.get('/dashboard', (req, res) => {
           error: req.query.error || null,
           success: req.query.success || null,
           cartError: req.query.cartError || null,
-          formData: req.session.formData || {}
+          formData: req.session.formData || {},
+          clearForm: req.query.success === 'Added to cart',
+          clearLocalStorage: clearLocalStorage
         });
       }
     });
@@ -128,6 +137,7 @@ app.post('/add-to-cart', (req, res) => {
     }
     // Add purchase to session (without deducting stock yet)
     req.session.purchases.push({ medicine, quantity: qty });
+    req.session.formData = {}; // Clear form data after successful add to cart
     res.redirect('/dashboard?success=Added to cart');
   });
 });
@@ -211,6 +221,8 @@ app.post('/buy', (req, res) => {
             return res.redirect('/dashboard?error=' + encodeURIComponent(errors.join(', ')));
           }
           req.session.formData = {}; // Clear form data after successful purchase
+          req.session.receiptPurchases = req.session.purchases.slice(); // Store for receipts
+          // Keep cart intact when going to receipts
           res.redirect('/receipts');
         }
       });
@@ -281,7 +293,7 @@ app.get('/receipts', (req, res) => {
   if (!req.session.loggedin) {
     return res.redirect('/');
   }
-  const purchases = req.session.purchases || [];
+  const purchases = req.session.receiptPurchases || [];
 
   // Fetch price details for each purchase
   if (purchases.length > 0) {
@@ -310,21 +322,37 @@ app.get('/receipts', (req, res) => {
 
         completed++;
         if (completed === purchases.length) {
+          let grandTotal = processedPurchases.reduce((sum, p) => sum + p.total, 0);
+          let discountPercent = 0;
+          if (grandTotal > 1000) discountPercent = 15;
+          else if (grandTotal > 500) discountPercent = 5;
+          else if (grandTotal > 200) discountPercent = 3;
+          let discountAmount = grandTotal * discountPercent / 100;
+          let discountedTotal = grandTotal - discountAmount;
+
           res.render('receipts', {
-            purchases: processedPurchases
+            purchases: processedPurchases,
+            grandTotal: grandTotal,
+            discountPercent: discountPercent,
+            discountAmount: discountAmount,
+            discountedTotal: discountedTotal
           });
         }
       });
     });
   } else {
     res.render('receipts', {
-      purchases: []
+      purchases: [],
+      grandTotal: 0,
+      discountPercent: 0,
+      discountAmount: 0,
+      discountedTotal: 0
     });
   }
 });
 
 app.post('/generate-receipts', (req, res) => {
-  if (!req.session.loggedin || !req.session.purchases) {
+  if (!req.session.loggedin || !req.session.receiptPurchases) {
     return res.redirect('/');
   }
   const { patientName } = req.body;
@@ -333,94 +361,104 @@ app.post('/generate-receipts', (req, res) => {
 });
 
 app.get('/download-pdf', (req, res) => {
-  if (!req.session.loggedin || !req.session.purchases || req.session.purchases.length === 0) {
+  if (!req.session.loggedin || !req.session.receiptPurchases || req.session.receiptPurchases.length === 0) {
     return res.redirect('/');
   }
 
-  const doc = new PDFDocument({ margin: 40, size: 'A4' });
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename=receipt.pdf');
-  doc.pipe(res);
+  const purchases = req.session.receiptPurchases;
 
-  // Header with border
-  doc.rect(30, 30, 535, 100).stroke();
-  doc.moveTo(30, 80).lineTo(565, 80).stroke();
+  // Fetch all price details at once
+  const queries = purchases.map(purchase => {
+    return new Promise((resolve, reject) => {
+      db.query('SELECT price_per_strip, tablets_in_a_strip FROM stock_available WHERE medicine = ?', [purchase.medicine], (err, results) => {
+        if (err) {
+          reject(err);
+        } else if (results.length === 0) {
+          reject(new Error(`Medicine ${purchase.medicine} not found`));
+        } else {
+          resolve({
+            medicine: purchase.medicine,
+            quantity: purchase.quantity,
+            pricePerStrip: results[0].price_per_strip,
+            tabletsInStrip: results[0].tablets_in_a_strip
+          });
+        }
+      });
+    });
+  });
 
-  // Pharmacy Header
-  doc.fontSize(20).font('Helvetica-Bold').text('COMMUNITY PHARMACY', 30, 45, { width: 535, align: 'center' });
-  doc.fontSize(10).font('Helvetica').text('123 Health Street, Wellness City, WC 12345', 30, 65, { width: 535, align: 'center' });
-  doc.text('Phone: (123) 456-7890 | Email: info@pharmacypro.com', 30, 90, { width: 535, align: 'center' });
+  Promise.all(queries).then((purchaseDetails) => {
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=receipt.pdf');
+    doc.pipe(res);
 
-  // Receipt Title
-  doc.moveDown(3);
-  doc.fontSize(16).font('Helvetica-Bold');
-  const receiptText = 'RECEIPT';
-  const receiptWidth = doc.widthOfString(receiptText);
-  doc.text(receiptText, 0, doc.y, { align: 'center' });
-  const pageWidth = doc.page.width;
-  const startX = (pageWidth - receiptWidth) / 2;
-  const endX = (pageWidth + receiptWidth) / 2;
-  doc.moveTo(startX, doc.y).lineTo(endX, doc.y).stroke();
+    // Header with border
+    doc.rect(30, 30, 535, 100).stroke();
+    doc.moveTo(30, 80).lineTo(565, 80).stroke();
 
-  // Receipt Details
-  doc.moveDown(1.5);
-  const today = new Date();
-  const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
-  const receiptNumber = `RCP-${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
-  doc.fontSize(11).font('Helvetica');
-  doc.text(`Receipt No: ${receiptNumber}`, 50, doc.y);
-  doc.text(`Date: ${formattedDate}`, 400, doc.y);
-  doc.moveDown(1);
-  doc.text(`Patient Name: ${req.session.patientName || 'Walk-in Customer'}`, 50, doc.y);
-  doc.text(`Time: ${today.toLocaleTimeString()}`, 400, doc.y);
-  // Table Header
-  doc.moveDown(2);
-  const tableTop = doc.y;
-  // Table border
-  doc.rect(40, tableTop, 510, 40).stroke();
-  // Table headers with internal lines
-  doc.fontSize(11).font('Helvetica-Bold');
-  doc.text('S.No', 45, tableTop + 20, { width: 30, align: 'center' });
-  doc.text('Medicine Name', 85, tableTop + 20, { width: 240, align: 'center' });
-  doc.text('Qty', 335, tableTop + 20, { width: 40, align: 'center' });
-  doc.text('Rate', 385, tableTop + 20, { width: 70, align: 'center' });
-  doc.text('Amount', 465, tableTop + 20, { width: 80, align: 'center' });
+    // Pharmacy Header
+    doc.fontSize(20).font('Helvetica-Bold').text('COMMUNITY PHARMACY', 30, 45, { width: 535, align: 'center' });
+    doc.fontSize(10).font('Helvetica').text('123 Health Street, Wellness City, WC 12345', 30, 65, { width: 535, align: 'center' });
+    doc.text('Phone: (123) 456-7890 | Email: info@pharmacypro.com', 30, 90, { width: 535, align: 'center' });
 
-  // Vertical lines
-  doc.moveTo(80, tableTop).lineTo(80, tableTop + 40).stroke();
-  doc.moveTo(330, tableTop).lineTo(330, tableTop + 40).stroke();
-  doc.moveTo(380, tableTop).lineTo(380, tableTop + 40).stroke();
-  doc.moveTo(460, tableTop).lineTo(460, tableTop + 40).stroke();
+    // Receipt Title
+    doc.moveDown(3);
+    doc.fontSize(16).font('Helvetica-Bold');
+    const receiptText = 'RECEIPT';
+    const receiptWidth = doc.widthOfString(receiptText);
+    doc.text(receiptText, 0, doc.y, { align: 'center' });
+    const pageWidth = doc.page.width;
+    const startX = (pageWidth - receiptWidth) / 2;
+    const endX = (pageWidth + receiptWidth) / 2;
+    doc.moveTo(startX, doc.y).lineTo(endX, doc.y).stroke();
 
-  let currentY = tableTop + 40;
-  let grandTotal = 0;
-  let itemCount = 0;
+    // Receipt Details
+    doc.moveDown(1.5);
+    const today = new Date();
+    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+    const receiptNumber = `RCP-${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+    doc.fontSize(11).font('Helvetica');
+    doc.text(`Receipt No: ${receiptNumber}`, 50, doc.y);
+    doc.text(`Date: ${formattedDate}`, 400, doc.y);
+    doc.moveDown(1);
+    doc.text(`Patient Name: ${req.session.patientName || 'Walk-in Customer'}`, 50, doc.y);
+    doc.text(`Time: ${today.toLocaleTimeString()}`, 400, doc.y);
+    // Table Header
+    doc.moveDown(2);
+    const tableTop = doc.y;
+    // Table border
+    doc.rect(40, tableTop, 510, 40).stroke();
+    // Table headers with internal lines
+    doc.fontSize(11).font('Helvetica-Bold');
+    doc.text('S.No', 45, tableTop + 20, { width: 30, align: 'center' });
+    doc.text('Medicine Name', 85, tableTop + 20, { width: 240, align: 'center' });
+    doc.text('Qty', 335, tableTop + 20, { width: 40, align: 'center' });
+    doc.text('Rate', 385, tableTop + 20, { width: 70, align: 'center' });
+    doc.text('Amount', 465, tableTop + 20, { width: 80, align: 'center' });
 
-  // Process each purchase
-  req.session.purchases.forEach((purchase, index) => {
-    // Fetch price details from database for each medicine
-    db.query('SELECT price_per_strip, tablets_in_a_strip FROM stock_available WHERE medicine = ?', [purchase.medicine], (err, results) => {
-      if (err) {
-        console.error('Error fetching price:', err);
-        return;
-      }
-      if (results.length === 0) {
-        return;
-      }
-      const pricePerStrip = results[0].price_per_strip;
-      const tabletsInStrip = results[0].tablets_in_a_strip;
-      const pricePerTablet = pricePerStrip / tabletsInStrip;
-      const quantityTablets = purchase.quantity;
-      const total = quantityTablets * pricePerTablet;
+    // Vertical lines
+    doc.moveTo(80, tableTop).lineTo(80, tableTop + 40).stroke();
+    doc.moveTo(330, tableTop).lineTo(330, tableTop + 40).stroke();
+    doc.moveTo(380, tableTop).lineTo(380, tableTop + 40).stroke();
+    doc.moveTo(460, tableTop).lineTo(460, tableTop + 40).stroke();
+
+    let currentY = tableTop + 40;
+    let grandTotal = 0;
+
+    // Process each purchase detail
+    purchaseDetails.forEach((detail, index) => {
+      const pricePerTablet = detail.pricePerStrip / detail.tabletsInStrip;
+      const total = detail.quantity * pricePerTablet;
       grandTotal += total;
-      itemCount++;
+
       // Item row
       const rowHeight = 30;
       doc.rect(40, currentY - 5, 510, rowHeight).stroke();
       doc.fontSize(10).font('Helvetica');
-      doc.text(`${itemCount}`, 45, currentY + 10, { width: 30, align: 'center' });
-      doc.text(`${purchase.medicine}`, 85, currentY + 10, { width: 240, align: 'center' });
-      doc.text(`${quantityTablets}`, 335, currentY + 10, { width: 40, align: 'center' });
+      doc.text(`${index + 1}`, 45, currentY + 10, { width: 30, align: 'center' });
+      doc.text(`${detail.medicine}`, 85, currentY + 10, { width: 240, align: 'center' });
+      doc.text(`${detail.quantity}`, 335, currentY + 10, { width: 40, align: 'center' });
       doc.text(`₹${pricePerTablet.toFixed(2)}`, 385, currentY + 10, { width: 70, align: 'center' });
       doc.text(`₹${total.toFixed(2)}`, 465, currentY + 10, { width: 80, align: 'center' });
 
@@ -431,32 +469,51 @@ app.get('/download-pdf', (req, res) => {
       doc.moveTo(460, currentY - 5).lineTo(460, currentY + 25).stroke();
 
       currentY += rowHeight;
-
-      // If this is the last item, finish the PDF
-      if (index === req.session.purchases.length - 1) {
-        // Total section
-        doc.moveDown(1);
-        doc.rect(350, doc.y, 195, 30).stroke();
-        doc.fontSize(12).font('Helvetica-Bold');
-        doc.text(`Grand Total: ₹${grandTotal.toFixed(2)}`, 360, doc.y + 8);
-
-        // Footer
-        doc.moveDown(3);
-        doc.fontSize(9).font('Helvetica');
-        doc.text('Thank you for choosing our pharmacy!', 0, doc.y, { align: 'center' });
-        doc.text('Please keep this receipt for your records.', 0, doc.y + 12, { align: 'center' });
-        doc.text('For any queries, contact us at (123) 456-7890', 0, doc.y + 24, { align: 'center' });
-
-        // Terms and conditions
-        doc.moveDown(1);
-        doc.fontSize(7).font('Helvetica');
-        doc.text('Terms & Conditions:', 50, doc.y);
-        doc.text('• Medicines once sold cannot be returned.', 50, doc.y + 10);
-        doc.text('• Keep medicines out of reach of children.', 50, doc.y + 18);
-        doc.text('• Consult your doctor before taking any medication.', 50, doc.y + 26);
-        doc.end();
-      }
     });
+
+    // Total section
+    let discountPercent = 0;
+    if (grandTotal > 1000) discountPercent = 15;
+    else if (grandTotal > 500) discountPercent = 5;
+    else if (grandTotal > 200) discountPercent = 3;
+    let discountAmount = grandTotal * discountPercent / 100;
+    let discountedTotal = grandTotal - discountAmount;
+
+    doc.moveDown(1);
+    doc.rect(350, doc.y, 195, 30).stroke();
+    doc.fontSize(12).font('Helvetica-Bold');
+    doc.text(`Subtotal: ₹${grandTotal.toFixed(2)}`, 360, doc.y + 8);
+
+    if (discountPercent > 0) {
+      doc.moveDown(1);
+      doc.rect(350, doc.y, 195, 30).stroke();
+      doc.fontSize(12).font('Helvetica-Bold');
+      doc.text(`Discount (${discountPercent}%): -₹${discountAmount.toFixed(2)}`, 360, doc.y + 8);
+    }
+
+    doc.moveDown(1);
+    doc.rect(350, doc.y, 195, 30).stroke();
+    doc.fontSize(12).font('Helvetica-Bold');
+    doc.text(`Total Amount: ₹${discountedTotal.toFixed(2)}`, 360, doc.y + 8);
+
+    // Footer
+    doc.moveDown(3);
+    doc.fontSize(9).font('Helvetica');
+    doc.text('Thank you for choosing our pharmacy!', 0, doc.y, { align: 'center' });
+    doc.text('Please keep this receipt for your records.', 0, doc.y + 12, { align: 'center' });
+    doc.text('For any queries, contact us at (123) 456-7890', 0, doc.y + 24, { align: 'center' });
+
+    // Terms and conditions
+    doc.moveDown(1);
+    doc.fontSize(7).font('Helvetica');
+    doc.text('Terms & Conditions:', 50, doc.y);
+    doc.text('• Medicines once sold cannot be returned.', 50, doc.y + 10);
+    doc.text('• Keep medicines out of reach of children.', 50, doc.y + 18);
+    doc.text('• Consult your doctor before taking any medication.', 50, doc.y + 26);
+    doc.end();
+  }).catch((err) => {
+    console.error('Error generating PDF:', err);
+    res.status(500).send('Error generating PDF');
   });
 });
 
