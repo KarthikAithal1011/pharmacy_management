@@ -222,8 +222,85 @@ app.post('/buy', (req, res) => {
           }
           req.session.formData = {}; // Clear form data after successful purchase
           req.session.receiptPurchases = req.session.purchases.slice(); // Store for receipts
-          // Keep cart intact when going to receipts
-          res.redirect('/receipts');
+
+          // Insert transaction record for daily collection
+          const purchases = req.session.receiptPurchases;
+          if (purchases.length > 0) {
+            let processedPurchases = [];
+            let calcCompleted = 0;
+
+            purchases.forEach((purchase, index) => {
+              db.query('SELECT price_per_strip, tablets_in_a_strip FROM stock_available WHERE medicine = ?', [purchase.medicine], (err, results) => {
+                if (err) {
+                  console.error('Error fetching price for transaction:', err);
+                  return;
+                }
+                if (results.length > 0) {
+                  const pricePerStrip = results[0].price_per_strip;
+                  const tabletsInStrip = results[0].tablets_in_a_strip;
+                  const pricePerTablet = pricePerStrip / tabletsInStrip;
+                  const total = purchase.quantity * pricePerTablet;
+
+                  processedPurchases.push({
+                    medicine: purchase.medicine,
+                    quantity: purchase.quantity,
+                    pricePerTablet: pricePerTablet,
+                    total: total
+                  });
+                }
+
+                calcCompleted++;
+                if (calcCompleted === purchases.length) {
+                  let grandTotal = processedPurchases.reduce((sum, p) => sum + p.total, 0);
+                  let discountPercent = 0;
+                  if (grandTotal > 1000) discountPercent = 15;
+                  else if (grandTotal > 500) discountPercent = 5;
+                  else if (grandTotal > 200) discountPercent = 3;
+                  let discountAmount = grandTotal * discountPercent / 100;
+                  let discountedTotal = grandTotal - discountAmount;
+
+                  // Update or insert daily collection record
+                  const today = new Date();
+                  const dateStr = today.toISOString().split('T')[0];
+
+                  // First, check if a record for today exists
+                  db.query('SELECT * FROM transactions WHERE date = ?', [dateStr], (err, results) => {
+                    if (err) {
+                      console.error('Error checking daily collection:', err);
+                      return res.redirect('/receipts');
+                    }
+
+                    if (results.length > 0) {
+                      // Update existing record
+                      const currentBefore = parseFloat(results[0].total_before_discount) || 0;
+                      const currentAfter = parseFloat(results[0].total_after_discount) || 0;
+
+                      db.query('UPDATE transactions SET total_before_discount = ?, total_after_discount = ? WHERE date = ?',
+                        [currentBefore + grandTotal, currentAfter + discountedTotal, dateStr], (err) => {
+                        if (err) {
+                          console.error('Error updating daily collection:', err);
+                        }
+                        // Continue to receipts regardless
+                        res.redirect('/receipts');
+                      });
+                    } else {
+                      // Insert new record
+                      db.query('INSERT INTO transactions (date, total_before_discount, total_after_discount) VALUES (?, ?, ?)',
+                        [dateStr, grandTotal, discountedTotal], (err) => {
+                        if (err) {
+                          console.error('Error inserting daily collection:', err);
+                        }
+                        // Continue to receipts regardless
+                        res.redirect('/receipts');
+                      });
+                    }
+                  });
+                }
+              });
+            });
+          } else {
+            res.redirect('/receipts');
+          }
         }
       });
     });
@@ -357,6 +434,7 @@ app.post('/generate-receipts', (req, res) => {
   }
   const { patientName } = req.body;
   req.session.patientName = patientName;
+
   res.redirect('/receipts');
 });
 
@@ -406,8 +484,10 @@ app.get('/download-pdf', (req, res) => {
     doc.moveDown(3);
     doc.fontSize(16).font('Helvetica-Bold');
     const receiptText = 'RECEIPT';
+    doc.fontSize(16).text(receiptText, {
+      align: 'center'
+    });
     const receiptWidth = doc.widthOfString(receiptText);
-    doc.text(receiptText, 0, doc.y, { align: 'center' });
     const pageWidth = doc.page.width;
     const startX = (pageWidth - receiptWidth) / 2;
     const endX = (pageWidth + receiptWidth) / 2;
@@ -514,6 +594,54 @@ app.get('/download-pdf', (req, res) => {
   }).catch((err) => {
     console.error('Error generating PDF:', err);
     res.status(500).send('Error generating PDF');
+  });
+});
+
+app.get('/daily-collection', (req, res) => {
+  if (!req.session.loggedin) {
+    return res.redirect('/');
+  }
+
+  // Get today's date in YYYY-MM-DD format for query
+  const today = new Date();
+  const dateStr = today.toISOString().split('T')[0];
+
+  // Format date for display as DD MM YYYY
+  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const year = today.getFullYear();
+  const formattedDate = `${day}-${month}-${year}`;
+
+  // Query to get daily collection summary
+  // Sum total_before_discount and total_after_discount for today
+  const query = `
+    SELECT
+      total_before_discount AS totalBeforeDiscount,
+      total_after_discount AS totalAfterDiscount
+    FROM transactions
+    WHERE date = ?
+  `;
+
+  db.query(query, [dateStr], (err, results) => {
+    if (err) {
+      console.error('Error fetching daily collection:', err);
+      return res.render('daily_collection', {
+        date: formattedDate,
+        totalBeforeDiscount: 0,
+        totalAfterDiscount: 0
+      });
+    }
+
+    const data = results[0] || {
+      totalBeforeDiscount: 0,
+      totalAfterDiscount: 0
+    };
+
+    res.render('daily_collection', {
+      date: formattedDate,
+      totalBeforeDiscount: Number(data.totalBeforeDiscount) || 0,
+      totalAfterDiscount: Number(data.totalAfterDiscount) || 0
+    });
   });
 });
 

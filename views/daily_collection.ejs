@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Collection - Pharmacy Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h1 {
+      color: #4a5568;
+      margin-bottom: 20px;
+    }
+    .summary {
+      margin: 20px 0;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 10px;
+      border-left: 5px solid #F59E0B;
+    }
+    .summary p {
+      margin: 10px 0;
+      font-size: 18px;
+      font-weight: 500;
+    }
+    .back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 25px;
+      background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .back-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fas fa-chart-line"></i> Daily Collection Summary</h1>
+    <div class="summary">
+      <p><i class="fas fa-calendar-day"></i> Date: <%= date %></p>
+      <p><i class="fas fa-rupee-sign"></i> Total Collection (Before Discount): ₹<%= totalBeforeDiscount.toFixed(2) %></p>
+      <p><i class="fas fa-rupee-sign"></i> Total Collection (After Discount): ₹<%= totalAfterDiscount.toFixed(2) %></p>
+    </div>
+    <a href="/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+  </div>
+</body>
+</html>
