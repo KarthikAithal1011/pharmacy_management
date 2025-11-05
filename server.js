@@ -77,14 +77,16 @@ app.get('/dashboard', (req, res) => {
     db.query('SELECT * FROM stock_available', (err, results) => {
       if (err) {
         console.error('Error fetching stock:', err);
-        res.render('dashboard', { username: req.session.username, medicines: [], purchases: req.session.purchases || [], error: null, success: null });
+        res.render('dashboard', { username: req.session.username, medicines: [], purchases: req.session.purchases || [], error: null, success: null, cartError: null, formData: req.session.formData || {} });
       } else {
         res.render('dashboard', {
           username: req.session.username,
           medicines: results,
           purchases: req.session.purchases || [],
           error: req.query.error || null,
-          success: req.query.success || null
+          success: req.query.success || null,
+          cartError: req.query.cartError || null,
+          formData: req.session.formData || {}
         });
       }
     });
@@ -102,11 +104,23 @@ app.post('/add-to-cart', (req, res) => {
   if (isNaN(qty) || qty <= 0) {
     return res.redirect('/dashboard?error=Invalid quantity');
   }
-  // Check if medicine exists and get tablets per strip (but don't deduct stock yet)
-  db.query('SELECT tablets_in_a_strip FROM stock_available WHERE medicine = ?', [medicine], (err, results) => {
+  // Store form data in session for retention
+  req.session.formData = { medicine, quantity };
+  // Check if medicine exists and get tablets per strip and stock (but don't deduct stock yet)
+  db.query('SELECT tablets_in_a_strip, stock, tablets_used_in_current_strip FROM stock_available WHERE medicine = ?', [medicine], (err, results) => {
     if (err) throw err;
     if (results.length === 0) {
       return res.redirect('/dashboard?error=Medicine not found');
+    }
+    if (results[0].stock <= 0) {
+      return res.redirect('/dashboard?cartError=Medicine out of stock');
+    }
+    const tabletsInStrip = results[0].tablets_in_a_strip;
+    const stock = results[0].stock;
+    const tabletsUsed = results[0].tablets_used_in_current_strip || 0;
+    const totalAvailableTablets = (stock * tabletsInStrip) - tabletsUsed;
+    if (qty > totalAvailableTablets) {
+      return res.redirect('/dashboard?cartError=Entered quantity more than available quantity');
     }
     // Initialize purchases array if not exists
     if (!req.session.purchases) {
@@ -196,6 +210,7 @@ app.post('/buy', (req, res) => {
           if (errors.length > 0) {
             return res.redirect('/dashboard?error=' + encodeURIComponent(errors.join(', ')));
           }
+          req.session.formData = {}; // Clear form data after successful purchase
           res.redirect('/receipts');
         }
       });
@@ -399,11 +414,9 @@ app.get('/download-pdf', (req, res) => {
       const total = quantityTablets * pricePerTablet;
       grandTotal += total;
       itemCount++;
-
       // Item row
       const rowHeight = 30;
       doc.rect(40, currentY - 5, 510, rowHeight).stroke();
-
       doc.fontSize(10).font('Helvetica');
       doc.text(`${itemCount}`, 45, currentY + 10, { width: 30, align: 'center' });
       doc.text(`${purchase.medicine}`, 85, currentY + 10, { width: 240, align: 'center' });
