@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 04, 2025 at 09:54 AM
+-- Generation Time: Nov 05, 2025 at 05:26 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -29,7 +29,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `admin_login` (
   `username` varchar(10) NOT NULL,
-  `password` varchar(10) NOT NULL
+  `password` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -37,7 +37,7 @@ CREATE TABLE `admin_login` (
 --
 
 INSERT INTO `admin_login` (`username`, `password`) VALUES
-('admin', 'password');
+('admin', 'adminpassword');
 
 -- --------------------------------------------------------
 
@@ -58,18 +58,18 @@ CREATE TABLE `stock_available` (
 --
 
 INSERT INTO `stock_available` (`medicine`, `stock`, `price_per_strip`, `tablets_in_a_strip`, `tablets_used_in_current_strip`) VALUES
-('Paracetamol', 95, 35, 10, 0),
-('Ibuprofen', 72, 50, 10, 0),
-('Amoxicillin', 60, 95, 6, 0),
+('Paracetamol', 100, 35, 10, 0),
+('Ibuprofen', 70, 50, 10, 0),
+('Amoxicillin', 59, 95, 6, 0),
 ('Metformin', 100, 40, 10, 0),
 ('Atorvastatin', 75, 120, 10, 0),
-('Omeprazole', 90, 65, 15, 0),
+('Omeprazole', 89, 65, 15, 0),
 ('Cetirizine', 150, 25, 10, 0),
 ('Azithromycin', 40, 110, 6, 0),
 ('Losartan', 55, 85, 10, 0),
-('Salbutamol', 30, 70, 10, 0),
+('Salbutamol', 29, 70, 10, 0),
 ('Amlodipine', 65, 60, 10, 0),
-('Ciprofloxacin', 45, 90, 10, 0),
+('Ciprofloxacin', 44, 90, 10, 0),
 ('Doxycycline', 70, 80, 8, 0),
 ('Hydrochlorothiazide', 80, 55, 10, 0),
 ('Clopidogrel', 50, 140, 10, 0),
@@ -80,7 +80,7 @@ INSERT INTO `stock_available` (`medicine`, `stock`, `price_per_strip`, `tablets_
 ('Pantoprazole', 85, 70, 15, 0),
 ('Diclofenac', 100, 40, 10, 0),
 ('Furosemide', 75, 50, 10, 0),
-('Insulin Glargine', 35, 300, 1, 0),
+('Insulin Glargine', 31, 300, 1, 0),
 ('Ranitidine', 90, 55, 10, 0),
 ('Simvastatin', 50, 110, 10, 0),
 ('Sertraline', 40, 160, 10, 0),
@@ -95,12 +95,12 @@ INSERT INTO `stock_available` (`medicine`, `stock`, `price_per_strip`, `tablets_
 ('Carbamazepine', 40, 140, 10, 0),
 ('Warfarin', 50, 90, 10, 0),
 ('Aspirin', 120, 30, 10, 0),
-('Vitamin D3', 150, 180, 4, 0),
+('Vitamin D3', 148, 180, 4, 0),
 ('Iron Supplement', 100, 70, 15, 0),
 ('Calcium Carbonate', 89, 95, 10, 0),
-('Brivup(50 mg)', 70, 190, 10, 0),
+('Brivup(50 mg)', 69, 190, 10, 0),
 ('Brivup(25 mg)', 51, 34, 7, 0),
-('Supradyn', 49, 72, 15, 0);
+('Supradyn', 48, 72, 15, 0);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
