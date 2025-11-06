@@ -16,14 +16,14 @@
       align-items: center;
       min-height: 100vh;
       margin: 0;
-      background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-      color: #e2e8f0;
+      background: white;
+      color: #374151;
     }
     .login-container {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
+      background: white;
       padding: 40px;
       border-radius: 20px;
+      border: 2px solid #000000;
       box-shadow: 0 20px 40px rgba(0,0,0,0.1);
       width: 100%;
       max-width: 400px;
@@ -42,6 +42,10 @@
     form {
       display: flex;
       flex-direction: column;
+      border: 2px solid #000000;
+      padding: 20px;
+      border-radius: 10px;
+      background: white;
     }
     .input-group {
       position: relative;
@@ -64,16 +68,16 @@
     }
     input:focus {
       outline: none;
-      border-color: #F59E0B;
+      border-color: #3B82F6;
       background: white;
-      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
     input::placeholder {
       color: #a0aec0;
     }
     button {
       padding: 15px;
-      background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%);
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
       color: white;
       border: none;
       border-radius: 10px;
@@ -87,7 +91,7 @@
       margin-bottom: 20px;
       font-size: 24px;
       font-weight: 700;
-      color: #F59E0B;
+      color: #4CAF50;
     }
     .error {
       background: #fed7d7;
