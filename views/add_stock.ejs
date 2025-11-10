@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Stock - Pharmacy Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: white;
+      min-height: 100vh;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h1 {
+      color: #4a5568;
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #374151;
+    }
+    select, input {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #000000;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      background: #f9fafb;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      box-sizing: border-box;
+    }
+    select:focus, input:focus {
+      outline: none;
+      border-color: #3B82F6;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    button {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 18px rgba(76, 175, 80, 0.3);
+    }
+    button:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 28px rgba(76, 175, 80, 0.4);
+    }
+    button:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+    .back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 25px;
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .back-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+    }
+    .logout {
+      margin-top: 20px;
+    }
+    .logout a {
+      display: inline-block;
+      padding: 12px 25px;
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .logout a:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fas fa-plus-circle"></i> Add Stock to Existing Medicine</h1>
+    <form action="/add-stock" method="POST">
+      <div class="form-group">
+        <label for="medicine"><i class="fas fa-pills"></i> Select Medicine:</label>
+        <select name="medicine" id="medicine" required>
+          <option value="">Choose a medicine...</option>
+          <% medicines.forEach(medicine => { %>
+            <option value="<%= medicine.medicine %>"><%= medicine.medicine %> (Current Stock: <%= medicine.stock %> strips)</option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="quantity"><i class="fas fa-hashtag"></i> Additional Quantity (Strips):</label>
+        <input type="number" name="quantity" id="quantity" min="1" required>
+      </div>
+      <button type="submit">
+        <i class="fas fa-plus"></i> Add Stock
+      </button>
+    </form>
+    <a href="/menu" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Menu</a>
+    <div class="logout">
+      <a href="/logout">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
+    </div>
+  </div>
+</body>
+</html>

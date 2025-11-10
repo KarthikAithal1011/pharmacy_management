@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pharmacy Management - Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: white;
+      min-height: 100vh;
+      color: #374151;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+      backdrop-filter: blur(20px);
+      padding: 25px 35px;
+      border-radius: 20px;
+      border: 1px solid #000000;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.05);
+      margin-bottom: 35px;
+      animation: slideDown 0.6s ease-in-out;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .header:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.15), 0 15px 30px rgba(0,0,0,0.1);
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    h1 {
+      color: #1f2937;
+      margin: 0;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .welcome {
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+      padding: 18px 28px;
+      border-radius: 30px;
+      font-weight: 600;
+      box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .welcome:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 35px rgba(76, 175, 80, 0.5);
+    }
+    .search-container {
+      background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+      padding: 25px;
+      border-radius: 20px;
+      border: 1px solid #000000;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08), 0 5px 10px rgba(0,0,0,0.04);
+      margin-bottom: 35px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      animation: fadeIn 0.6s ease-in-out 0.3s both;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .search-container:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.12), 0 8px 15px rgba(0,0,0,0.08);
+    }
+    .search-container input {
+      padding: 15px 22px;
+      width: 320px;
+      border: 2px solid #000000;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      background: #f9fafb;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .search-container input:focus {
+      outline: none;
+      border-color: #3B82F6;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .search-container button {
+      padding: 15px 28px;
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+    .search-container button:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 28px rgba(76, 175, 80, 0.4);
+    }
+    .search-container button:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 30px;
+    }
+    .main-content {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 20px;
+      border: 1px solid #000000;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.08), 0 8px 15px rgba(0,0,0,0.04);
+      overflow: hidden;
+      animation: fadeIn 0.6s ease-in-out 0.5s both;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .main-content:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 45px rgba(0,0,0,0.12), 0 10px 20px rgba(0,0,0,0.08);
+    }
+    h2 {
+      background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+      color: white;
+      margin: 0;
+      padding: 25px 35px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 18px 22px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    th {
+      background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+      color: #374151;
+      font-weight: 700;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.75px;
+    }
+    tr:hover {
+      background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+      transition: background 0.3s ease, transform 0.2s ease;
+      transform: scale(1.01);
+    }
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .buy-form {
+      background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+      padding: 35px;
+      border-radius: 20px;
+      border: 2px solid #000000;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.08), 0 8px 15px rgba(0,0,0,0.04);
+      animation: fadeIn 0.6s ease-in-out 0.7s both;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .buy-form:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 45px rgba(0,0,0,0.12), 0 10px 20px rgba(0,0,0,0.08);
+    }
+    .buy-form h3 {
+      margin-top: 0;
+      color: #1f2937;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 30px;
+      letter-spacing: -0.025em;
+    }
+    .buy-form label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+    }
+    .buy-form select, .buy-form input {
+      width: 100%;
+      padding: 15px 18px;
+      border: 2px solid #000000;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      background: #f9fafb;
+      margin-bottom: 18px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .buy-form select:focus, .buy-form input:focus {
+      outline: none;
+      border-color: #3B82F6;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .buy-form button {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 18px rgba(76, 175, 80, 0.3);
+    }
+    .buy-form button:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 28px rgba(76, 175, 80, 0.4);
+    }
+    .buy-form button:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+    .cart-section {
+      background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+      padding: 25px;
+      border-radius: 20px;
+      border: 1px solid #000000;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08), 0 5px 10px rgba(0,0,0,0.04);
+      margin-bottom: 25px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .cart-section:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.12), 0 8px 15px rgba(0,0,0,0.08);
+    }
+    .cart-section h3 {
+      margin-top: 0;
+      color: #1f2937;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+      letter-spacing: -0.025em;
+    }
+    .logout {
+      background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+      padding: 25px;
+      border-radius: 20px;
+      border: 1px solid #000000;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08), 0 5px 10px rgba(0,0,0,0.04);
+      text-align: center;
+      animation: fadeIn 0.6s ease-in-out 0.9s both;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .logout:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.12), 0 8px 15px rgba(0,0,0,0.08);
+    }
+    .logout a {
+      display: inline-block;
+      padding: 15px 28px;
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 30px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+    .logout a:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 10px 25px rgba(76, 175, 80, 0.4);
+    }
+    .logout a:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+    .alert-text {
+      animation: pulse 1s infinite, blink 1s infinite;
+    }
+    @media (max-width: 768px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+      .header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+      .search-container {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .search-container input {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body data-clear-local-storage="<%= typeof clearLocalStorage !== 'undefined' && clearLocalStorage ? 'true' : 'false' %>">
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-pills"></i> Community Pharmacy Dashboard</h1>
+      <div class="welcome">
+        <i class="fas fa-user"></i> Welcome, <%= username %>!
+      </div>
+    </div>
+
+    <div class="search-container">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search for medicine...">
+      <button id="searchButton">
+        <i class="fas fa-search"></i> Search
+      </button>
+    </div>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div style="background: #fee2e2; color: #dc2626; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 6px solid #dc2626; font-size: 18px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 38, 38, 0.2);">
+        <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i> <strong style="font-size: 20px;">Error:</strong> <%= error %>
+      </div>
+    <% } %>
+
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div style="background: #d1fae5; color: #059669; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 6px solid #059669; font-size: 18px; font-weight: bold; box-shadow: 0 4px 8px rgba(5, 150, 105, 0.2);">
+        <i class="fas fa-check-circle" style="font-size: 24px;"></i> <strong style="font-size: 20px;">Success:</strong> <%= success %>
+      </div>
+    <% } %>
+
+    <div class="content-grid">
+      <div class="main-content">
+        <h2><i class="fas fa-list"></i> Medicines and Stocks Available</h2>
+        <table>
+          <thead>
+            <tr>
+              <th><i class="fas fa-pills"></i> Medicine</th>
+              <th><i class="fas fa-boxes"></i> Stock (Strips)</th>
+              <th><i class="fas fa-tags"></i> Price per Strip</th>
+              <th><i class="fas fa-tablets"></i> Tablets per Strip</th>
+              <th><i class="fas fa-rupee-sign"></i> Price per Tablet</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% medicines.forEach(medicine => { %>
+              <tr>
+                <td>
+                  <%= medicine.medicine %>
+                  <% if (medicine.stock < 10 && medicine.stock > 0) { %>
+                    <br><span class="alert-text" style="color: red; font-size: 14px; font-weight: bold;">(Low Stock)</span>
+                  <% } %>
+                </td>
+                <td><%- medicine.stock > 0 ? medicine.stock : '<span class="alert-text" style="color: red; font-weight: bold;">Out of Stock</span>' %></td>
+                <td>₹<%= medicine.price_per_strip %></td>
+                <td><%= medicine.tablets_in_a_strip %></td>
+                <td>₹<%=(medicine.price_per_strip / medicine.tablets_in_a_strip).toFixed(2) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sidebar">
+        <form action="/add-to-cart" method="POST" class="buy-form">
+          <h3><i class="fas fa-shopping-cart"></i> Add to Cart</h3>
+          <label for="medicine"><i class="fas fa-pills"></i> Search Medicine:</label>
+          <input type="text" name="medicine" id="medicine" list="medicines-list" required placeholder="Type to search medicine" value="<%= typeof formData !== 'undefined' && formData.medicine && !clearForm ? formData.medicine : '' %>">
+          <datalist id="medicines-list">
+            <% medicines.forEach(medicine => { %>
+              <option value="<%= medicine.medicine %>">
+            <% }); %>
+          </datalist>
+          <label for="quantity"><i class="fas fa-hashtag"></i> Quantity (Tablets):</label>
+          <input type="number" name="quantity" id="quantity" min="1" required value="<%= typeof formData !== 'undefined' && formData.quantity && !clearForm ? formData.quantity : '' %>">
+          <button type="submit">
+            <i class="fas fa-cart-plus"></i> Add to Cart
+          </button>
+          <% if (typeof cartError !== 'undefined' && cartError) { %>
+            <div style="color: red; font-size: 14px; margin-top: 10px; font-weight: bold;">
+              <%= cartError %>
+            </div>
+          <% } %>
+          <button type="button" id="add-more" style="margin-top: 15px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); padding: 12px 20px; border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); transition: all 0.3s ease;">
+            <i class="fas fa-plus"></i> Add More Medicines
+          </button>
+        </form>
+
+        <div class="cart-section">
+          <h3><i class="fas fa-shopping-basket"></i> Cart (<%= purchases.length %> items)</h3>
+          <% if (purchases && purchases.length > 0) { %>
+            <div style="margin-bottom: 15px; text-align: right;">
+              <form action="/clear-cart" method="POST" style="display: inline;">
+                <button type="submit" style="background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; box-shadow: 0 3px 8px rgba(76, 175, 80, 0.3); transition: all 0.3s ease;">
+                  <i class="fas fa-trash"></i> Clear Cart
+                </button>
+              </form>
+            </div>
+            <ul style="list-style: none; padding: 0;">
+              <% purchases.forEach((purchase, index) => { %>
+                <li style="padding: 10px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+                  <span><%= purchase.medicine %> - <%= purchase.quantity %> tablets</span>
+                  <form action="/remove-from-cart" method="POST" style="display: inline;">
+                    <input type="hidden" name="index" value="<%= index %>">
+                    <button type="submit" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Remove</button>
+                  </form>
+                </li>
+              <% }); %>
+            </ul>
+            <form action="/buy" method="POST" style="margin-top: 15px;">
+              <button type="submit" style="width: 100%; padding: 18px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 18px rgba(76, 175, 80, 0.3); transition: all 0.3s ease;">
+                <i class="fas fa-credit-card"></i> Checkout & Generate Receipts
+              </button>
+            </form>
+          <% } else { %>
+            <p style="text-align: center; color: #666;">Your cart is empty. Add some medicines!</p>
+          <% } %>
+        </div>
+
+        <div class="logout">
+          <a href="/menu" style="display: block; margin-bottom: 15px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); padding: 15px 28px; border-radius: 30px; color: white; text-decoration: none; font-weight: 600; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); transition: all 0.3s ease;">
+            <i class="fas fa-arrow-left"></i> Back to Menu
+          </a>
+          <a href="/logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.getElementById('searchButton').addEventListener('click', function() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('tbody tr');
+      rows.forEach(row => {
+        const medicineName = row.cells[0].textContent.toLowerCase();
+        if (medicineName.includes(searchTerm)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+
+    document.getElementById('add-more').addEventListener('click', function() {
+      // Focus on the medicine field without clearing
+      document.getElementById('medicine').focus();
+    });
+
+    // Load saved form values from localStorage
+    window.addEventListener('load', function() {
+      const clearLocalStorage = document.body.dataset.clearLocalStorage === 'true';
+      if (clearLocalStorage) {
+        localStorage.removeItem('medicine');
+        localStorage.removeItem('quantity');
+      }
+      const savedMedicine = localStorage.getItem('medicine');
+      const savedQuantity = localStorage.getItem('quantity');
+      if (savedMedicine) document.getElementById('medicine').value = savedMedicine;
+      if (savedQuantity) document.getElementById('quantity').value = savedQuantity;
+    });
+
+    // Save form values to localStorage on input
+    document.getElementById('medicine').addEventListener('input', function() {
+      localStorage.setItem('medicine', this.value);
+    });
+    document.getElementById('quantity').addEventListener('input', function() {
+      localStorage.setItem('quantity', this.value);
+    });
+  </script>
+</body>
+</html>

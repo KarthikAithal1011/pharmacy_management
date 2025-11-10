@@ -48,7 +48,7 @@ app.use(express.static('public'));
 // Routes
 app.get('/', (req, res) => {
   if (req.session.loggedin) {
-    res.redirect('/dashboard');
+    res.redirect('/menu');
   } else {
     res.render('login', { error: null });
   }
@@ -65,14 +65,35 @@ app.post('/login', (req, res) => {
       req.session.loggedin = true;
       req.session.username = username;
       req.session.formData = {}; // Clear form data on login
-      res.redirect('/dashboard');
+      res.redirect('/menu');
     } else {
       res.render('login', { error: 'Incorrect username or password.' });
     }
   });
 });
 
-app.get('/dashboard', (req, res) => {
+app.get('/menu', (req, res) => {
+  if (req.session.loggedin) {
+    // Fetch from stock_available table
+    db.query('SELECT * FROM stock_available', (err, results) => {
+      if (err) {
+        console.error('Error fetching stock:', err);
+        res.render('menu', { username: req.session.username, medicines: [], error: null, success: null });
+      } else {
+        res.render('menu', {
+          username: req.session.username,
+          medicines: results,
+          error: req.query.error || null,
+          success: req.query.success || null
+        });
+      }
+    });
+  } else {
+    res.redirect('/');
+  }
+});
+
+app.get('/view-dashboard', (req, res) => {
   if (req.session.loggedin) {
     // Clear form data if clear=true is in query or if no error/cartError and not clearing cart
     let clearLocalStorage = false;
@@ -84,9 +105,9 @@ app.get('/dashboard', (req, res) => {
     db.query('SELECT * FROM stock_available', (err, results) => {
       if (err) {
         console.error('Error fetching stock:', err);
-        res.render('dashboard', { username: req.session.username, medicines: [], purchases: req.session.purchases || [], error: null, success: null, cartError: null, formData: req.session.formData || {}, clearLocalStorage: clearLocalStorage });
+        res.render('view_dashboard', { username: req.session.username, medicines: [], purchases: req.session.purchases || [], error: null, success: null, cartError: null, formData: req.session.formData || {}, clearLocalStorage: clearLocalStorage });
       } else {
-        res.render('dashboard', {
+        res.render('view_dashboard', {
           username: req.session.username,
           medicines: results,
           purchases: req.session.purchases || [],
@@ -104,6 +125,30 @@ app.get('/dashboard', (req, res) => {
   }
 });
 
+app.get('/add-stock', (req, res) => {
+  if (req.session.loggedin) {
+    // Fetch from stock_available table
+    db.query('SELECT * FROM stock_available', (err, results) => {
+      if (err) {
+        console.error('Error fetching stock:', err);
+        res.render('add_stock', { username: req.session.username, medicines: [] });
+      } else {
+        res.render('add_stock', { username: req.session.username, medicines: results });
+      }
+    });
+  } else {
+    res.redirect('/');
+  }
+});
+
+app.get('/add-medicine', (req, res) => {
+  if (req.session.loggedin) {
+    res.render('add_medicine', { username: req.session.username });
+  } else {
+    res.redirect('/');
+  }
+});
+
 app.post('/add-to-cart', (req, res) => {
   if (!req.session.loggedin) {
     return res.redirect('/');
@@ -111,7 +156,7 @@ app.post('/add-to-cart', (req, res) => {
   const { medicine, quantity } = req.body;
   const qty = parseInt(quantity);
   if (isNaN(qty) || qty <= 0) {
-    return res.redirect('/dashboard?error=Invalid quantity');
+    return res.redirect('/menu?error=Invalid quantity');
   }
   // Store form data in session for retention
   req.session.formData = { medicine, quantity };
@@ -119,17 +164,17 @@ app.post('/add-to-cart', (req, res) => {
   db.query('SELECT tablets_in_a_strip, stock, tablets_used_in_current_strip FROM stock_available WHERE medicine = ?', [medicine], (err, results) => {
     if (err) throw err;
     if (results.length === 0) {
-      return res.redirect('/dashboard?error=Medicine not found');
+      return res.redirect('/menu?error=Medicine not found');
     }
     if (results[0].stock <= 0) {
-      return res.redirect('/dashboard?cartError=Medicine out of stock');
+      return res.redirect('/menu?cartError=Medicine out of stock');
     }
     const tabletsInStrip = results[0].tablets_in_a_strip;
     const stock = results[0].stock;
     const tabletsUsed = results[0].tablets_used_in_current_strip || 0;
     const totalAvailableTablets = (stock * tabletsInStrip) - tabletsUsed;
     if (qty > totalAvailableTablets) {
-      return res.redirect('/dashboard?cartError=Entered quantity more than available quantity');
+      return res.redirect('/menu?cartError=Entered quantity more than available quantity');
     }
     // Initialize purchases array if not exists
     if (!req.session.purchases) {
@@ -138,7 +183,7 @@ app.post('/add-to-cart', (req, res) => {
     // Add purchase to session (without deducting stock yet)
     req.session.purchases.push({ medicine, quantity: qty });
     req.session.formData = {}; // Clear form data after successful add to cart
-    res.redirect('/dashboard?success=Added to cart');
+    res.redirect('/view-dashboard?success=Added to cart');
   });
 });
 
@@ -149,23 +194,23 @@ app.post('/remove-from-cart', (req, res) => {
   const { index } = req.body;
   const idx = parseInt(index);
   if (isNaN(idx) || idx < 0 || !req.session.purchases || idx >= req.session.purchases.length) {
-    return res.redirect('/dashboard?error=Invalid item');
+    return res.redirect('/view-dashboard?error=Invalid item');
   }
   req.session.purchases.splice(idx, 1);
-  res.redirect('/dashboard?success=Item removed from cart');
+  res.redirect('/view-dashboard?success=Item removed from cart');
 });
 
 app.post('/clear-cart', (req, res) => {
   if (!req.session.loggedin) {
-    return res.redirect('/');
+    return res.redirect('/view-dashboard');
   }
   req.session.purchases = [];
-  res.redirect('/dashboard?success=Cart cleared');
+  res.redirect('/view-dashboard?success=Cart cleared');
 });
 
 app.post('/buy', (req, res) => {
   if (!req.session.loggedin || !req.session.purchases || req.session.purchases.length === 0) {
-    return res.redirect('/dashboard');
+    return res.redirect('/menu');
   }
   // Deduct stock for all purchases - only deduct complete strips when equivalent tablets are bought
   let errors = [];
@@ -218,7 +263,7 @@ app.post('/buy', (req, res) => {
         completed++;
         if (completed === req.session.purchases.length) {
           if (errors.length > 0) {
-            return res.redirect('/dashboard?error=' + encodeURIComponent(errors.join(', ')));
+            return res.redirect('/view-dashboard?error=' + encodeURIComponent(errors.join(', ')));
           }
           req.session.formData = {}; // Clear form data after successful purchase
           req.session.receiptPurchases = req.session.purchases.slice(); // Store for receipts
@@ -328,7 +373,7 @@ app.post('/add-stock', (req, res) => {
     const newStock = results[0].stock + qty;
     db.query('UPDATE stock_available SET stock = ? WHERE medicine = ?', [newStock, medicine], (err) => {
       if (err) throw err;
-      res.redirect('/dashboard');
+      res.redirect('/menu');
     });
   });
 });
@@ -343,25 +388,25 @@ app.post('/add-medicine', (req, res) => {
   const tablets = parseInt(tablets_in_a_strip);
 
   if (!medicine || medicine.trim() === '' || isNaN(qty) || qty <= 0 || isNaN(price) || price <= 0 || isNaN(tablets) || tablets <= 0) {
-    return res.redirect('/dashboard?error=Invalid input data. Please check all fields.');
+    return res.redirect('/view-dashboard?error=Invalid input data. Please check all fields.');
   }
 
   // Check if medicine already exists
   db.query('SELECT medicine FROM stock_available WHERE medicine = ?', [medicine], (err, results) => {
     if (err) {
       console.error('Error checking medicine existence:', err);
-      return res.redirect('/dashboard?error=Database error occurred. Please try again.');
+      return res.redirect('/view-dashboard?error=Database error occurred. Please try again.');
     }
     if (results.length > 0) {
-      return res.redirect('/dashboard?error=Medicine already exists. Use "Add Stock" to increase stock for existing medicines.');
+      return res.redirect('/view-dashboard?error=Medicine already exists. Use "Add Stock" to increase stock for existing medicines.');
     }
     // Insert new medicine with all details
     db.query('INSERT INTO stock_available (medicine, stock, price_per_strip, tablets_in_a_strip, tablets_used_in_current_strip) VALUES (?, ?, ?, ?, 0)', [medicine, qty, price, tablets], (err) => {
       if (err) {
         console.error('Error adding medicine:', err);
-        return res.redirect('/dashboard?error=Failed to add medicine. Please try again.');
+      res.redirect('/view-dashboard?error=Failed to add medicine. Please try again.');
       }
-      res.redirect('/dashboard?success=Medicine added successfully');
+      res.redirect('/menu?success=Medicine added successfully');
     });
   });
 });
