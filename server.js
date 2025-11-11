@@ -4,6 +4,7 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const path = require('path');
 const PDFDocument = require('pdfkit');
+const expressLayouts = require('express-ejs-layouts');
 
 const app = express();
 const port = 3000;
@@ -11,6 +12,10 @@ const port = 3000;
 // Set view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Use express-ejs-layouts
+app.use(expressLayouts);
+app.set('layout', 'layout');
 
 // MySQL connection
 const db = mysql.createConnection({

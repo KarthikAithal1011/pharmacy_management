@@ -1,197 +1,90 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pharmacy Management - Menu</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Roboto', sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: white;
-      min-height: 100vh;
-      color: #374151;
-      line-height: 1.6;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
-      backdrop-filter: blur(20px);
-      padding: 25px 35px;
-      border-radius: 20px;
-      border: 1px solid #000000;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.05);
-      margin-bottom: 35px;
-      animation: slideDown 0.6s ease-in-out;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .header:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 25px 50px rgba(0,0,0,0.15), 0 15px 30px rgba(0,0,0,0.1);
-    }
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    h1 {
-      color: #1f2937;
-      margin: 0;
-      font-weight: 800;
-      letter-spacing: -0.025em;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-    .welcome {
-      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
-      color: white;
-      padding: 18px 28px;
-      border-radius: 30px;
-      font-weight: 600;
-      box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .welcome:hover {
-      transform: scale(1.05);
-      box-shadow: 0 12px 35px rgba(76, 175, 80, 0.5);
-    }
-    .menu-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 30px;
-    }
-    .menu-item {
-      background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-      padding: 35px;
-      border-radius: 20px;
-      border: 1px solid #000000;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.08), 0 8px 15px rgba(0,0,0,0.04);
-      text-align: center;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      animation: fadeIn 0.6s ease-in-out both;
-    }
-    .menu-item:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 45px rgba(0,0,0,0.12), 0 10px 20px rgba(0,0,0,0.08);
-    }
-    .menu-item:nth-child(1) { animation-delay: 0.1s; }
-    .menu-item:nth-child(2) { animation-delay: 0.2s; }
-    .menu-item:nth-child(3) { animation-delay: 0.3s; }
-    .menu-item:nth-child(4) { animation-delay: 0.4s; }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .menu-item h3 {
-      color: #1f2937;
-      margin-bottom: 20px;
-      font-weight: 700;
-      letter-spacing: -0.025em;
-    }
-    .menu-item p {
-      color: #6b7280;
-      margin-bottom: 25px;
-      font-size: 16px;
-    }
-    .menu-item a {
-      display: inline-block;
-      padding: 15px 30px;
-      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
-      color: white;
-      text-decoration: none;
-      border-radius: 30px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-    }
-    .menu-item a:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 12px 28px rgba(76, 175, 80, 0.4);
-    }
-    .menu-item a:active {
-      transform: translateY(-1px) scale(0.98);
-    }
-    .logout {
-      text-align: center;
-      margin-top: 40px;
-    }
-    .logout a {
-      display: inline-block;
-      padding: 15px 28px;
-      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
-      color: white;
-      text-decoration: none;
-      border-radius: 30px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-    }
-    .logout a:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 10px 25px rgba(76, 175, 80, 0.4);
-    }
-    .logout a:active {
-      transform: translateY(-1px) scale(0.98);
-    }
-    @media (max-width: 768px) {
-      .header {
-        flex-direction: column;
-        gap: 15px;
-        text-align: center;
-      }
-      .menu-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1><i class="fas fa-pills"></i> Community Pharmacy Management</h1>
-      <div class="welcome">
-        <i class="fas fa-user"></i> Welcome, <%= username %>!
-      </div>
-    </div>
+<% title = 'Menu - Pharmacy Management' %>
+<% showNav = true %>
+<% showFooter = true %>
 
-    <div class="menu-grid">
-      <div class="menu-item">
-        <h3><i class="fas fa-shopping-cart"></i> View Dashboard</h3>
-        <p>Search medicines, add to cart, and checkout purchases.</p>
-        <a href="/view-dashboard">Go to Dashboard</a>
-      </div>
-      <div class="menu-item">
-        <h3><i class="fas fa-plus-circle"></i> Add Stock</h3>
-        <p>Increase stock for existing medicines.</p>
-        <a href="/add-stock">Add Stock</a>
-      </div>
-      <div class="menu-item">
-        <h3><i class="fas fa-pills"></i> Add New Medicine</h3>
-        <p>Add new medicines to the inventory.</p>
-        <a href="/add-medicine">Add Medicine</a>
-      </div>
-      <div class="menu-item">
-        <h3><i class="fas fa-chart-line"></i> View Daily Sales</h3>
-        <p>Check today's sales collection.</p>
-        <a href="/daily-collection">View Sales</a>
-      </div>
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <!-- Header Section -->
+  <div class="text-center mb-12">
+    <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mb-6 animate-bounce-subtle">
+      <i class="fas fa-pills text-4xl text-white"></i>
     </div>
-
-    <div class="logout">
-      <a href="/logout">
-        <i class="fas fa-sign-out-alt"></i> Logout
-      </a>
+    <h1 class="text-4xl font-bold text-gray-900 mb-4">
+      Community Pharmacy Management
+    </h1>
+    <div class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-full font-medium shadow-lg">
+      <i class="fas fa-user mr-2"></i>
+      Welcome, <%= username %>!
     </div>
   </div>
-</body>
-</html>
+
+  <!-- Menu Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 mb-12">
+    <!-- View Dashboard Card -->
+    <div class="glass-effect shadow-modern rounded-xl p-8 hover-lift transition-all duration-300 border border-gray-100">
+      <div class="text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full mb-6">
+          <i class="fas fa-shopping-cart text-2xl text-white"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-3">View Dashboard</h3>
+        <p class="text-gray-600 mb-6 leading-relaxed">Search medicines, add to cart, and checkout purchases.</p>
+        <a href="/view-dashboard" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
+          <i class="fas fa-arrow-right mr-2"></i>
+          Go to Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- Add Stock Card -->
+    <div class="glass-effect shadow-modern rounded-xl p-8 hover-lift transition-all duration-300 border border-gray-100">
+      <div class="text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full mb-6">
+          <i class="fas fa-plus-circle text-2xl text-white"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-3">Add Stock</h3>
+        <p class="text-gray-600 mb-6 leading-relaxed">Increase stock for existing medicines.</p>
+        <a href="/add-stock" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-medium rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
+          <i class="fas fa-plus mr-2"></i>
+          Add Stock
+        </a>
+      </div>
+    </div>
+
+    <!-- Add New Medicine Card -->
+    <div class="glass-effect shadow-modern rounded-xl p-8 hover-lift transition-all duration-300 border border-gray-100">
+      <div class="text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full mb-6">
+          <i class="fas fa-pills text-2xl text-white"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-3">Add New Medicine</h3>
+        <p class="text-gray-600 mb-6 leading-relaxed">Add new medicines to the inventory.</p>
+        <a href="/add-medicine" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-medium rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
+          <i class="fas fa-plus mr-2"></i>
+          Add Medicine
+        </a>
+      </div>
+    </div>
+
+    <!-- View Daily Sales Card -->
+    <div class="glass-effect shadow-modern rounded-xl p-8 hover-lift transition-all duration-300 border border-gray-100">
+      <div class="text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full mb-6">
+          <i class="fas fa-chart-line text-2xl text-white"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-3">View Daily Sales</h3>
+        <p class="text-gray-600 mb-6 leading-relaxed">Check today's sales collection.</p>
+        <a href="/daily-collection" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 text-white font-medium rounded-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
+          <i class="fas fa-chart-bar mr-2"></i>
+          View Sales
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout Section -->
+  <div class="text-center">
+    <a href="/logout" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 text-white font-medium rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 transform hover:scale-105 hover:shadow-lg">
+      <i class="fas fa-sign-out-alt mr-2"></i>
+      Logout
+    </a>
+  </div>
+</div>

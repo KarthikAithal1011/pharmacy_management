@@ -1,127 +1,71 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pharmacy Management - Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Roboto', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      background: white;
-      color: #374151;
-    }
-    .login-container {
-      background: white;
-      padding: 40px;
-      border-radius: 20px;
-      border: 2px solid #000000;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-      animation: fadeIn 0.5s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 30px;
-      color: #4a5568;
-      font-weight: 500;
-    }
-    form {
-      display: flex;
-      flex-direction: column;
-      border: none;
-      padding: 20px;
-      border-radius: 10px;
-      background: white;
-    }
-    .input-group {
-      position: relative;
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 500;
-      color: #4a5568;
-    }
-    input {
-      width: 100%;
-      padding: 15px 20px;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      font-size: 16px;
-      transition: all 0.3s ease;
-      background: #f8fafc;
-    }
-    input:focus {
-      outline: none;
-      border-color: #3B82F6;
-      background: white;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    input::placeholder {
-      color: #a0aec0;
-    }
-    button {
-      padding: 15px;
-      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: 500;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    .logo {
-      text-align: center;
-      margin-bottom: 20px;
-      font-size: 24px;
-      font-weight: 700;
-      color: #4CAF50;
-    }
-    .error {
-      background: #fed7d7;
-      color: #c53030;
-      padding: 10px;
-      border-radius: 5px;
-      margin-bottom: 20px;
-      text-align: center;
-      font-weight: 500;
-    }
-  </style>
-</head>
-<body>
-  <div class="login-container">
-    <div class="logo">🏥 Community Pharmacy</div>
-    <h2>Welcome Back</h2>
-    <% if (typeof error !== 'undefined' && error) { %>
-      <div class="error"><%= error %></div>
-    <% } %>
-    <form action="/login" method="POST">
-      <div class="input-group">
-        <label for="username">Enter Username</label>
-        <input type="text" name="username" id="username" placeholder="Username" required>
+<% title = 'Login - Pharmacy Management' %>
+<% showNav = false %>
+<% showFooter = false %>
+
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8">
+    <div class="glass-effect shadow-modern rounded-xl p-8 hover-lift">
+      <div class="text-center">
+        <div class="mx-auto h-16 w-16 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center mb-4 animate-bounce-subtle">
+          <i class="fas fa-pills text-3xl text-white"></i>
+        </div>
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">
+          PharmacyPro
+        </h2>
+        <p class="text-gray-600">Sign in to your account</p>
       </div>
-      <div class="input-group">
-        <label for="password">Enter Password</label>
-        <input type="password" name="password" id="password" placeholder="Password" required>
+
+      <% if (typeof error !== 'undefined' && error) { %>
+      <div class="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg animate-slide-up">
+        <div class="flex items-center">
+          <i class="fas fa-exclamation-circle mr-2"></i>
+          <%= error %>
+        </div>
       </div>
-      <button type="submit">Sign In</button>
-    </form>
+      <% } %>
+
+      <form class="mt-8 space-y-6" action="/login" method="POST">
+        <div class="space-y-4">
+          <div>
+            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-user mr-2 text-primary-600"></i>Username
+            </label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              required
+              class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm transition-all duration-200"
+              placeholder="Enter your username"
+            >
+          </div>
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+              <i class="fas fa-lock mr-2 text-primary-600"></i>Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm transition-all duration-200"
+              placeholder="Enter your password"
+            >
+          </div>
+        </div>
+
+        <div>
+          <button
+            type="submit"
+            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+          >
+            <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+              <i class="fas fa-sign-in-alt text-primary-200 group-hover:text-primary-100"></i>
+            </span>
+            Sign In
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
-</body>
-</html>
+</div>

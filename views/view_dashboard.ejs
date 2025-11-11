@@ -369,6 +369,7 @@
               <th><i class="fas fa-boxes"></i> Stock (Strips)</th>
               <th><i class="fas fa-tags"></i> Price per Strip</th>
               <th><i class="fas fa-tablets"></i> Tablets per Strip</th>
+              <th><i class="fas fa-tablets"></i> Tablets Used in Current Strip</th>
               <th><i class="fas fa-rupee-sign"></i> Price per Tablet</th>
             </tr>
           </thead>
@@ -384,6 +385,7 @@
                 <td><%- medicine.stock > 0 ? medicine.stock : '<span class="alert-text" style="color: red; font-weight: bold;">Out of Stock</span>' %></td>
                 <td>₹<%= medicine.price_per_strip %></td>
                 <td><%= medicine.tablets_in_a_strip %></td>
+                <td><%= medicine.tablets_used_in_current_strip || 0 %></td>
                 <td>₹<%=(medicine.price_per_strip / medicine.tablets_in_a_strip).toFixed(2) %></td>
               </tr>
             <% }); %>
