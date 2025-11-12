@@ -1,1 +1,1 @@
-To import the .sql file present in this repository, first open XAMPP MySQL in your system, create a new database called pharmacy_management. Click the option IMPORT, next to the SQL option, and import this file.
+To import the .sql file present in this repository, first open XAMPP MySQL in your system, create a new database called pharmacy_management. Click the option IMPORT, next to the SQL option, and import the "pharmacy_management.sql" file.
