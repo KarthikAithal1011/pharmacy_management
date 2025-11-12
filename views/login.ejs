@@ -2,70 +2,124 @@
 <% showNav = false %>
 <% showFooter = false %>
 
-<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-md w-full space-y-8">
-    <div class="glass-effect shadow-modern rounded-xl p-8 hover-lift">
-      <div class="text-center">
-        <div class="mx-auto h-16 w-16 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center mb-4 animate-bounce-subtle">
-          <i class="fas fa-pills text-3xl text-white"></i>
-        </div>
-        <h2 class="text-3xl font-bold text-gray-900 mb-2">
-          PharmacyPro
-        </h2>
-        <p class="text-gray-600">Sign in to your account</p>
-      </div>
+<!-- Background -->
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 via-white to-gray-200 relative overflow-hidden p-6">
 
-      <% if (typeof error !== 'undefined' && error) { %>
-      <div class="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg animate-slide-up">
-        <div class="flex items-center">
-          <i class="fas fa-exclamation-circle mr-2"></i>
-          <%= error %>
-        </div>
-      </div>
-      <% } %>
+  <!-- Subtle background color blobs -->
+  <div class="absolute w-80 h-80 bg-indigo-300 rounded-full blur-3xl opacity-30 -top-20 -left-20 animate-float-slow"></div>
+  <div class="absolute w-96 h-96 bg-pink-300 rounded-full blur-3xl opacity-30 -bottom-24 -right-24 animate-float-reverse"></div>
 
-      <form class="mt-8 space-y-6" action="/login" method="POST">
-        <div class="space-y-4">
-          <div>
-            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-user mr-2 text-primary-600"></i>Username
-            </label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              required
-              class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm transition-all duration-200"
-              placeholder="Enter your username"
-            >
+  <!-- Login card wrapper -->
+  <div class="relative z-10 w-full max-w-md">
+    <div class="glow-border">
+      <div class="card-content rounded-2xl p-8 shadow-2xl backdrop-blur-xl bg-slate-900/85 border border-slate-800 text-gray-100 relative z-10">
+        <div class="text-center">
+          <div class="mx-auto h-16 w-16 bg-gradient-to-r from-indigo-500 to-pink-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg animate-float">
+            <i class="fas fa-pills text-3xl text-white drop-shadow-lg"></i>
           </div>
-          <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-lock mr-2 text-primary-600"></i>Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm transition-all duration-200"
-              placeholder="Enter your password"
-            >
+          <h2 class="text-3xl font-extrabold mb-1 text-white">Pharmacy<span class="text-indigo-400">Pro</span></h2>
+          <p class="text-gray-400 text-sm">Sign in to your account</p>
+        </div>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+        <div class="mt-6 bg-red-100/10 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg">
+          <div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <%= error %>
           </div>
         </div>
+        <% } %>
 
-        <div>
+        <form class="mt-8 space-y-5" action="/login" method="POST">
+          <div class="space-y-4">
+            <div>
+              <label for="username" class="block text-sm font-medium text-gray-300 mb-1">
+                <i class="fas fa-user mr-2 text-indigo-400"></i>Username
+              </label>
+              <input id="username" name="username" type="text" required
+                     class="block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-gray-100 rounded-lg bg-slate-800/70 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                     placeholder="Enter your username">
+            </div>
+            <div class="relative">
+              <label for="password" class="block text-sm font-medium text-gray-300 mb-1">
+                <i class="fas fa-lock mr-2 text-indigo-400"></i>Password
+              </label>
+              <input id="password" name="password" type="password" required
+                     class="block w-full px-4 py-3 border border-slate-600 placeholder-gray-500 text-gray-100 rounded-lg bg-slate-800/70 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pr-10 transition-all"
+                     placeholder="Enter your password">
+              <button type="button" id="togglePassword"
+                      class="absolute inset-y-0 right-0 top-7 flex items-center px-3 text-gray-400 hover:text-indigo-400">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
           <button
             type="submit"
-            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+            class="group relative w-full flex justify-center py-3 px-4 text-sm font-semibold rounded-lg text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 focus:outline-none focus:ring-4 focus:ring-indigo-400/50 transition-transform transform hover:scale-[1.03] shadow-lg"
           >
             <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-              <i class="fas fa-sign-in-alt text-primary-200 group-hover:text-primary-100"></i>
+              <i class="fas fa-sign-in-alt text-indigo-200 group-hover:text-indigo-100"></i>
             </span>
             Sign In
           </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- 💫 CSS -->
+<style>
+
+  /* === OUTER MOVING BORDER === */
+  .glow-border {
+    position: relative;
+    border-radius: 1.25rem;
+    isolation: isolate; /* ensures pseudo-element stays behind */
+  }
+
+  .glow-border::before {
+    content: "";
+    position: absolute;
+    inset: -4px; /* sits outside the form */
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      #2563eb,
+      #f97316,
+      #2563eb
+    );
+    background-size: 300% 300%;
+    animation: borderMove 6s linear infinite;
+    filter: blur(3px) brightness(1.0);
+    z-index: -1;
+  }
+
+  @keyframes borderMove {
+    0% { background-position: 0% 0%; }
+    25% { background-position: 100% 0%; }
+    50% { background-position: 100% 100%; }
+    75% { background-position: 0% 100%; }
+    100% { background-position: 0% 0%; }
+  }
+
+  /* Inner card */
+  .card-content {
+    position: relative;
+    border-radius: calc(1.25rem - 4px);
+    z-index: 2;
+  }
+</style>
+
+<!-- Password toggle -->
+<script>
+  const togglePassword=document.querySelector('#togglePassword');
+  const password=document.querySelector('#password');
+  const icon=togglePassword.querySelector('i');
+  togglePassword.addEventListener('click',()=>{
+    const type=password.getAttribute('type')==='password'?'text':'password';
+    password.setAttribute('type',type);
+    icon.classList.toggle('fa-eye-slash');
+  });
+</script>

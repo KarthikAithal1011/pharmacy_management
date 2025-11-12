@@ -55,14 +55,14 @@ app.get('/', (req, res) => {
   if (req.session.loggedin) {
     res.redirect('/menu');
   } else {
-    res.render('login', { error: null });
+    res.render('login', { error: null, showNav: false });
   }
 });
 
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
-    return res.render('login', { error: 'Please enter both username and password.' });
+    return res.render('login', { error: 'Please enter both username and password.', showNav: false });
   }
   db.query('SELECT * FROM admin_login WHERE username = ? AND password = ?', [username, password], (err, results) => {
     if (err) throw err;
@@ -72,7 +72,7 @@ app.post('/login', (req, res) => {
       req.session.formData = {}; // Clear form data on login
       res.redirect('/menu');
     } else {
-      res.render('login', { error: 'Incorrect username or password.' });
+      res.render('login', { error: 'Incorrect username or password.', showNav: false });
     }
   });
 });
@@ -83,13 +83,15 @@ app.get('/menu', (req, res) => {
     db.query('SELECT * FROM stock_available', (err, results) => {
       if (err) {
         console.error('Error fetching stock:', err);
-        res.render('menu', { username: req.session.username, medicines: [], error: null, success: null });
+        res.render('menu', { username: req.session.username, medicines: [], error: null, success: null, showNav: true, showHeader: true });
       } else {
         res.render('menu', {
           username: req.session.username,
           medicines: results,
           error: req.query.error || null,
-          success: req.query.success || null
+          success: req.query.success || null,
+          showHeader: true,
+          showNav: true
         });
       }
     });
@@ -110,7 +112,7 @@ app.get('/view-dashboard', (req, res) => {
     db.query('SELECT * FROM stock_available', (err, results) => {
       if (err) {
         console.error('Error fetching stock:', err);
-        res.render('view_dashboard', { username: req.session.username, medicines: [], purchases: req.session.purchases || [], error: null, success: null, cartError: null, formData: req.session.formData || {}, clearLocalStorage: clearLocalStorage });
+        res.render('view_dashboard', { username: req.session.username, medicines: [], purchases: req.session.purchases || [], error: null, success: null, cartError: null, formData: req.session.formData || {}, clearLocalStorage: clearLocalStorage, showNav: false });
       } else {
         res.render('view_dashboard', {
           username: req.session.username,
@@ -121,7 +123,8 @@ app.get('/view-dashboard', (req, res) => {
           cartError: req.query.cartError || null,
           formData: req.session.formData || {},
           clearForm: req.query.success === 'Added to cart',
-          clearLocalStorage: clearLocalStorage
+          clearLocalStorage: clearLocalStorage,
+          showNav: false
         });
       }
     });
@@ -136,9 +139,9 @@ app.get('/add-stock', (req, res) => {
     db.query('SELECT * FROM stock_available', (err, results) => {
       if (err) {
         console.error('Error fetching stock:', err);
-        res.render('add_stock', { username: req.session.username, medicines: [] });
+        res.render('add_stock', { username: req.session.username, medicines: [], showNav: false });
       } else {
-        res.render('add_stock', { username: req.session.username, medicines: results });
+        res.render('add_stock', { username: req.session.username, medicines: results, showNav: false });
       }
     });
   } else {
@@ -148,7 +151,7 @@ app.get('/add-stock', (req, res) => {
 
 app.get('/add-medicine', (req, res) => {
   if (req.session.loggedin) {
-    res.render('add_medicine', { username: req.session.username });
+    res.render('add_medicine', { username: req.session.username, showNav: false });
   } else {
     res.redirect('/');
   }

@@ -1,1 +1,0 @@
-- [x] Remove duplicate logout button from views/menu.ejs
