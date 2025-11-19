@@ -1,167 +1,508 @@
-<% title = 'Dashboard - Pharmacy Management' %>
-<% showFooter = true %>
-
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <!-- Header Section -->
-  <div class="text-center mb-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-2">
-      <i class="fas fa-pills text-primary-600 mr-3"></i>Community Pharmacy Dashboard
-    </h1>
-    <div class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-full font-medium shadow-lg">
-      <i class="fas fa-user mr-2"></i>Welcome, <%= username %>!
-    </div>
-  </div>
-
-  <!-- Search Section -->
-  <div class="glass-effect shadow-modern rounded-xl p-6 mb-8 hover-lift">
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-      <i class="fas fa-search text-primary-600 text-xl"></i>
-      <input
-        type="text"
-        id="searchInput"
-        placeholder="Search for medicine..."
-        class="flex-1 max-w-md px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
-      >
-      <button
-        id="searchButton"
-        class="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-medium rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 transform hover:scale-105 hover:shadow-lg flex items-center gap-2"
-      >
-        <i class="fas fa-search"></i> Search
-      </button>
-    </div>
-  </div>
-
-  <!-- Alerts -->
-  <% if (typeof error !== 'undefined' && error) { %>
-  <div class="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg mb-6 animate-slide-up flex items-center">
-    <i class="fas fa-exclamation-triangle mr-3 text-xl"></i>
-    <span class="font-medium">Error:</span> <%= error %>
-  </div>
-  <% } %>
-
-  <% if (typeof success !== 'undefined' && success) { %>
-  <div class="bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-lg mb-6 animate-slide-up flex items-center">
-    <i class="fas fa-check-circle mr-3 text-xl"></i>
-    <span class="font-medium">Success:</span> <%= success %>
-  </div>
-  <% } %>
-
-  <!-- Main Content Grid -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- Medicines Table -->
-    <div class="lg:col-span-2">
-      <div class="glass-effect shadow-modern rounded-xl overflow-hidden hover-lift">
-        <div class="bg-gradient-to-r from-primary-600 to-primary-700 text-white px-6 py-4">
-          <h2 class="text-xl font-semibold flex items-center">
-            <i class="fas fa-list mr-3"></i>Medicines and Stocks Available
-          </h2>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  <i class="fas fa-pills mr-2"></i>Medicine
-                </th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  <i class="fas fa-boxes mr-2"></i>Stock (Strips)
-                </th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  <i class="fas fa-tags mr-2"></i>Price per Strip
-                </th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  <i class="fas fa-tablets mr-2"></i>Tablets per Strip
-                </th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  <i class="fas fa-rupee-sign mr-2"></i>Price per Tablet
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <% medicines.forEach(medicine => { %>
-              <tr class="hover:bg-gray-50 transition-colors duration-200">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
-                    <div class="text-sm font-medium text-gray-900">
-                      <%= medicine.medicine %>
-                    </div>
-                    <% if (medicine.stock < 10 && medicine.stock > 0) { %>
-                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 animate-pulse">
-                      Low Stock
-                    </span>
-                    <% } %>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <% if (medicine.stock > 0) { %>
-                    <span class="text-sm text-gray-900"><%= medicine.stock %></span>
-                  <% } else { %>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 animate-pulse">
-                      Out of Stock
-                    </span>
-                  <% } %>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ₹<%= medicine.price_per_strip %>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <%= medicine.tablets_in_a_strip %>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ₹<%=(medicine.price_per_strip / medicine.tablets_in_a_strip).toFixed(2) %>
-                </td>
-              </tr>
-              <% }); %>
-            </tbody>
-          </table>
-        </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pharmacy Management - Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: white;
+      min-height: 100vh;
+      color: #374151;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+      backdrop-filter: blur(20px);
+      padding: 25px 35px;
+      border-radius: 20px;
+      border: 1px solid #000000;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.05);
+      margin-bottom: 35px;
+      animation: slideDown 0.6s ease-in-out;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .header:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.15), 0 15px 30px rgba(0,0,0,0.1);
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    h1 {
+      color: #1f2937;
+      margin: 0;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .welcome {
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+      padding: 18px 28px;
+      border-radius: 30px;
+      font-weight: 600;
+      box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .welcome:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 35px rgba(76, 175, 80, 0.5);
+    }
+    .search-container {
+      background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+      padding: 25px;
+      border-radius: 20px;
+      border: 1px solid #000000;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08), 0 5px 10px rgba(0,0,0,0.04);
+      margin-bottom: 35px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      animation: fadeIn 0.6s ease-in-out 0.3s both;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .search-container:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.12), 0 8px 15px rgba(0,0,0,0.08);
+    }
+    .search-container input {
+      padding: 15px 22px;
+      width: 320px;
+      border: 2px solid #000000;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      background: #f9fafb;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .search-container input:focus {
+      outline: none;
+      border-color: #3B82F6;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .search-container button {
+      padding: 15px 28px;
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+    .search-container button:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 28px rgba(76, 175, 80, 0.4);
+    }
+    .search-container button:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 30px;
+    }
+    .main-content {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 20px;
+      border: 1px solid #000000;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.08), 0 8px 15px rgba(0,0,0,0.04);
+      overflow: hidden;
+      animation: fadeIn 0.6s ease-in-out 0.5s both;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .main-content:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 45px rgba(0,0,0,0.12), 0 10px 20px rgba(0,0,0,0.08);
+    }
+    h2 {
+      background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+      color: white;
+      margin: 0;
+      padding: 25px 35px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 18px 22px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    th {
+      background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+      color: #374151;
+      font-weight: 700;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.75px;
+    }
+    tr:hover {
+      background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+      transition: background 0.3s ease, transform 0.2s ease;
+      transform: scale(1.01);
+    }
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .buy-form {
+      background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+      padding: 35px;
+      border-radius: 20px;
+      border: 2px solid #000000;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.08), 0 8px 15px rgba(0,0,0,0.04);
+      animation: fadeIn 0.6s ease-in-out 0.7s both;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .buy-form:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 45px rgba(0,0,0,0.12), 0 10px 20px rgba(0,0,0,0.08);
+    }
+    .buy-form h3 {
+      margin-top: 0;
+      color: #1f2937;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 30px;
+      letter-spacing: -0.025em;
+    }
+    .buy-form label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+    }
+    .buy-form select, .buy-form input {
+      width: 100%;
+      padding: 15px 18px;
+      border: 2px solid #000000;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      background: #f9fafb;
+      margin-bottom: 18px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .buy-form select:focus, .buy-form input:focus {
+      outline: none;
+      border-color: #3B82F6;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .buy-form button {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 18px rgba(76, 175, 80, 0.3);
+    }
+    .buy-form button:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 28px rgba(76, 175, 80, 0.4);
+    }
+    .buy-form button:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+    .cart-section {
+      background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+      padding: 25px;
+      border-radius: 20px;
+      border: 1px solid #000000;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08), 0 5px 10px rgba(0,0,0,0.04);
+      margin-bottom: 25px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .cart-section:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.12), 0 8px 15px rgba(0,0,0,0.08);
+    }
+    .cart-section h3 {
+      margin-top: 0;
+      color: #1f2937;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+      letter-spacing: -0.025em;
+    }
+    .logout {
+      background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+      padding: 25px;
+      border-radius: 20px;
+      border: 1px solid #000000;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08), 0 5px 10px rgba(0,0,0,0.04);
+      text-align: center;
+      animation: fadeIn 0.6s ease-in-out 0.9s both;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .logout:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.12), 0 8px 15px rgba(0,0,0,0.08);
+    }
+    .logout a {
+      display: inline-block;
+      padding: 15px 28px;
+      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 30px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+    .logout a:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 10px 25px rgba(76, 175, 80, 0.4);
+    }
+    .logout a:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+    .alert-text {
+      animation: pulse 1s infinite, blink 1s infinite;
+    }
+    @media (max-width: 768px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+      .header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+      .search-container {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .search-container input {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body data-clear-local-storage="<%= typeof clearLocalStorage !== 'undefined' && clearLocalStorage ? 'true' : 'false' %>">
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-pills"></i> Community Pharmacy Dashboard</h1>
+      <div class="welcome">
+        <i class="fas fa-user"></i> Welcome, <%= username %>!
       </div>
     </div>
 
-    <!-- Sidebar -->
-    <div class="space-y-6">
-      <!-- Add to Cart Form -->
-      <form action="/add-to-cart" method="POST" class="glass-effect shadow-modern rounded-xl p-6 hover-lift">
-        <h3 class="text-lg font-semibold text-gray-900 mb-6 text-center flex items-center justify-center">
-          <i class="fas fa-shopping-cart text-primary-600 mr-2"></i>Add to Cart
-        </h3>
+    <div class="search-container">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search for medicine...">
+      <button id="searchButton">
+        <i class="fas fa-search"></i> Search
+      </button>
+    </div>
 
-        <div class="space-y-4">
-          <div>
-            <label for="medicine" class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-pills mr-2 text-primary-600"></i>Search Medicine
-            </label>
-            <input
-              type="text"
-              name="medicine"
-              id="medicine"
-              list="medicines-list"
-              required
-              placeholder="Type to search medicine"
-              value="<%= typeof formData !== 'undefined' && formData.medicine && !clearForm ? formData.medicine : '' %>"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
-            >
-            <datalist id="medicines-list">
-              <% medicines.forEach(medicine => { %>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div style="background: #fee2e2; color: #dc2626; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 6px solid #dc2626; font-size: 18px; font-weight: bold; box-shadow: 0 4px 8px rgba(220, 38, 38, 0.2);">
+        <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i> <strong style="font-size: 20px;">Error:</strong> <%= error %>
+      </div>
+    <% } %>
+
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div style="background: #d1fae5; color: #059669; padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 6px solid #059669; font-size: 18px; font-weight: bold; box-shadow: 0 4px 8px rgba(5, 150, 105, 0.2);">
+        <i class="fas fa-check-circle" style="font-size: 24px;"></i> <strong style="font-size: 20px;">Success:</strong> <%= success %>
+      </div>
+    <% } %>
+
+    <div class="content-grid">
+      <div class="main-content">
+        <h2><i class="fas fa-list"></i> Medicines and Stocks Available</h2>
+        <table>
+          <thead>
+            <tr>
+              <th><i class="fas fa-pills"></i> Medicine</th>
+              <th><i class="fas fa-boxes"></i> Stock (Strips)</th>
+              <th><i class="fas fa-tags"></i> Price per Strip</th>
+              <th><i class="fas fa-tablets"></i> Tablets per Strip</th>
+              <th><i class="fas fa-tablets"></i> Tablets Used in Current Strip</th>
+              <th><i class="fas fa-rupee-sign"></i> Price per Tablet</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% medicines.forEach(medicine => { %>
+              <tr>
+                <td>
+                  <%= medicine.medicine %>
+                  <% if (medicine.stock < 10 && medicine.stock > 0) { %>
+                    <br><span class="alert-text" style="color: red; font-size: 14px; font-weight: bold;">(Low Stock)</span>
+                  <% } %>
+                </td>
+                <td><%- medicine.stock > 0 ? medicine.stock : '<span class="alert-text" style="color: red; font-weight: bold;">Out of Stock</span>' %></td>
+                <td>₹<%= medicine.price_per_strip %></td>
+                <td><%= medicine.tablets_in_a_strip %></td>
+                <td><%= medicine.tablets_used_in_current_strip || 0 %></td>
+                <td>₹<%=(medicine.price_per_strip / medicine.tablets_in_a_strip).toFixed(2) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sidebar">
+        <form action="/add-to-cart" method="POST" class="buy-form">
+          <h3><i class="fas fa-shopping-cart"></i> Add to Cart</h3>
+          <label for="medicine"><i class="fas fa-pills"></i> Search Medicine:</label>
+          <input type="text" name="medicine" id="medicine" list="medicines-list" required placeholder="Type to search medicine" value="<%= typeof formData !== 'undefined' && formData.medicine && !clearForm ? formData.medicine : '' %>">
+          <datalist id="medicines-list">
+            <% medicines.forEach(medicine => { %>
               <option value="<%= medicine.medicine %>">
+            <% }); %>
+          </datalist>
+          <label for="quantity"><i class="fas fa-hashtag"></i> Quantity (Tablets):</label>
+          <input type="number" name="quantity" id="quantity" min="1" required value="<%= typeof formData !== 'undefined' && formData.quantity && !clearForm ? formData.quantity : '' %>">
+          <button type="submit">
+            <i class="fas fa-cart-plus"></i> Add to Cart
+          </button>
+          <% if (typeof cartError !== 'undefined' && cartError) { %>
+            <div style="color: red; font-size: 14px; margin-top: 10px; font-weight: bold;">
+              <%= cartError %>
+            </div>
+          <% } %>
+          <button type="button" id="add-more" style="margin-top: 15px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); padding: 12px 20px; border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); transition: all 0.3s ease;">
+            <i class="fas fa-plus"></i> Add More Medicines
+          </button>
+        </form>
+
+        <div class="cart-section">
+          <h3><i class="fas fa-shopping-basket"></i> Cart (<%= purchases.length %> items)</h3>
+          <% if (purchases && purchases.length > 0) { %>
+            <div style="margin-bottom: 15px; text-align: right;">
+              <form action="/clear-cart" method="POST" style="display: inline;">
+                <button type="submit" style="background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; box-shadow: 0 3px 8px rgba(76, 175, 80, 0.3); transition: all 0.3s ease;">
+                  <i class="fas fa-trash"></i> Clear Cart
+                </button>
+              </form>
+            </div>
+            <ul style="list-style: none; padding: 0;">
+              <% purchases.forEach((purchase, index) => { %>
+                <li style="padding: 10px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+                  <span><%= purchase.medicine %> - <%= purchase.quantity %> tablets</span>
+                  <form action="/remove-from-cart" method="POST" style="display: inline;">
+                    <input type="hidden" name="index" value="<%= index %>">
+                    <button type="submit" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Remove</button>
+                  </form>
+                </li>
               <% }); %>
-            </datalist>
-          </div>
+            </ul>
+            <form action="/buy" method="POST" style="margin-top: 15px;">
+              <button type="submit" style="width: 100%; padding: 18px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 18px rgba(76, 175, 80, 0.3); transition: all 0.3s ease;">
+                <i class="fas fa-credit-card"></i> Checkout & Generate Receipts
+              </button>
+            </form>
+          <% } else { %>
+            <p style="text-align: center; color: #666;">Your cart is empty. Add some medicines!</p>
+          <% } %>
+        </div>
 
-          <div>
-            <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">
-              <i class="fas fa-hashtag mr-2 text-primary-600"></i>Quantity (Tablets)
-            </label>
-            <input
-              type="number"
-              name="quantity"
-              id="quantity"
-              min="1"
-              required
-              value="<%= typeof formData !== 'undefined' && formData.quantity && !clearForm ? formData.quantity : '' %>"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
-            >
-          </div>
+        <div class="logout">
+          <a href="/menu" style="display: block; margin-bottom: 15px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); padding: 15px 28px; border-radius: 30px; color: white; text-decoration: none; font-weight: 600; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); transition: all 0.3s ease;">
+            <i class="fas fa-arrow-left"></i> Back to Menu
+          </a>
+          <a href="/logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.getElementById('searchButton').addEventListener('click', function() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('tbody tr');
+      rows.forEach(row => {
+        const medicineName = row.cells[0].textContent.toLowerCase();
+        if (medicineName.includes(searchTerm)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
 
-          <button
-            type="submit"
+    document.getElementById('add-more').addEventListener('click', function() {
+      // Focus on the medicine field without clearing
+      document.getElementById('medicine').focus();
+    });
+
+    // Load saved form values from localStorage
+    window.addEventListener('load', function() {
+      const clearLocalStorage = document.body.dataset.clearLocalStorage === 'true';
+      if (clearLocalStorage) {
+        localStorage.removeItem('medicine');
+        localStorage.removeItem('quantity');
+      }
+      const savedMedicine = localStorage.getItem('medicine');
+      const savedQuantity = localStorage.getItem('quantity');
+      if (savedMedicine) document.getElementById('medicine').value = savedMedicine;
+      if (savedQuantity) document.getElementById('quantity').value = savedQuantity;
+    });
+
+    // Save form values to localStorage on input
+    document.getElementById('medicine').addEventListener('input', function() {
+      localStorage.setItem('medicine', this.value);
+    });
+    document.getElementById('quantity').addEventListener('input', function() {
+      localStorage.setItem('quantity', this.value);
+    });
+  </script>
+</body>
+</html>

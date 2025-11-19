@@ -90,9 +90,6 @@
         </div>
         <div class="flex items-center space-x-4">
           <% if (typeof showHeader !== 'undefined' && showHeader && typeof username !== 'undefined') { %>
-          <span class="text-sm text-gray-700">
-            <i class="fas fa-user mr-2 text-primary-600"></i>Welcome, <%= username %>
-          </span>
           <a href="/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
             <i class="fas fa-sign-out-alt mr-2"></i>Logout
           </a>

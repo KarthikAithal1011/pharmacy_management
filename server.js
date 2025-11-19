@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const expressLayouts = require('express-ejs-layouts');
+const cron = require('node-cron');
 
 const app = express();
 const port = 3000;
@@ -38,6 +39,8 @@ db.connect((err) => {
 
   });
 });
+
+
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -112,9 +115,9 @@ app.get('/view-dashboard', (req, res) => {
     db.query('SELECT * FROM stock_available', (err, results) => {
       if (err) {
         console.error('Error fetching stock:', err);
-        res.render('view_dashboard', { username: req.session.username, medicines: [], purchases: req.session.purchases || [], error: null, success: null, cartError: null, formData: req.session.formData || {}, clearLocalStorage: clearLocalStorage, showNav: false });
+        res.render('dashboard', { username: req.session.username, medicines: [], purchases: req.session.purchases || [], error: null, success: null, cartError: null, formData: req.session.formData || {}, clearLocalStorage: clearLocalStorage, showNav: false });
       } else {
-        res.render('view_dashboard', {
+        res.render('dashboard', {
           username: req.session.username,
           medicines: results,
           purchases: req.session.purchases || [],
@@ -220,6 +223,7 @@ app.post('/buy', (req, res) => {
   if (!req.session.loggedin || !req.session.purchases || req.session.purchases.length === 0) {
     return res.redirect('/menu');
   }
+
   // Deduct stock for all purchases - only deduct complete strips when equivalent tablets are bought
   let errors = [];
   let completed = 0;
@@ -434,6 +438,24 @@ app.get('/receipts', (req, res) => {
       db.query('SELECT price_per_strip, tablets_in_a_strip FROM stock_available WHERE medicine = ?', [purchase.medicine], (err, results) => {
         if (err) {
           console.error('Error fetching price for receipts:', err);
+          completed++;
+          if (completed === purchases.length) {
+            let grandTotal = processedPurchases.reduce((sum, p) => sum + p.total, 0);
+            let discountPercent = 0;
+            if (grandTotal > 1000) discountPercent = 15;
+            else if (grandTotal > 500) discountPercent = 5;
+            else if (grandTotal > 200) discountPercent = 3;
+            let discountAmount = grandTotal * discountPercent / 100;
+            let discountedTotal = grandTotal - discountAmount;
+            res.render('receipts', {
+              purchases: processedPurchases,
+              grandTotal: grandTotal,
+              discountPercent: discountPercent,
+              discountAmount: discountAmount,
+              discountedTotal: discountedTotal,
+              generated: req.query.generated === 'true'
+            });
+          }
           return;
         }
         if (results.length > 0) {
@@ -465,7 +487,8 @@ app.get('/receipts', (req, res) => {
             grandTotal: grandTotal,
             discountPercent: discountPercent,
             discountAmount: discountAmount,
-            discountedTotal: discountedTotal
+            discountedTotal: discountedTotal,
+            generated: req.query.generated === 'true'
           });
         }
       });
@@ -476,7 +499,8 @@ app.get('/receipts', (req, res) => {
       grandTotal: 0,
       discountPercent: 0,
       discountAmount: 0,
-      discountedTotal: 0
+      discountedTotal: 0,
+      generated: req.query.generated === 'true'
     });
   }
 });
@@ -488,7 +512,7 @@ app.post('/generate-receipts', (req, res) => {
   const { patientName } = req.body;
   req.session.patientName = patientName;
 
-  res.redirect('/receipts');
+  res.redirect('/receipts?generated=true');
 });
 
 app.get('/download-pdf', (req, res) => {
@@ -520,8 +544,8 @@ app.get('/download-pdf', (req, res) => {
 
   Promise.all(queries).then((purchaseDetails) => {
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=receipt.pdf');
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'inline; filename=receipt.pdf');
     doc.pipe(res);
 
     // Header with border
@@ -701,6 +725,39 @@ app.get('/daily-collection', (req, res) => {
 app.get('/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/');
+});
+
+// Cron job to create daily records at the end of each day (11:59 PM)
+cron.schedule('59 23 * * *', () => {
+  console.log('Running daily record creation job at end of day...');
+
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+
+  // Check if today's record exists
+  db.query('SELECT * FROM transactions WHERE date = ?', [todayStr], (err, results) => {
+    if (err) {
+      console.error('Error checking today\'s record:', err);
+      return;
+    }
+
+    // If no record exists for today, create one with 0 values
+    if (results.length === 0) {
+      db.query('INSERT INTO transactions (date, total_before_discount, total_after_discount) VALUES (?, 0, 0)',
+        [todayStr], (err) => {
+        if (err) {
+          console.error('Error creating today\'s record:', err);
+        } else {
+          console.log(`Created record for ${todayStr} with 0 sales at end of day`);
+        }
+      });
+    } else {
+      console.log(`Record for ${todayStr} already exists (sales occurred today)`);
+    }
+  });
+}, {
+  timezone: "Asia/Kolkata", // Adjust timezone as needed
+  scheduled: true // Ensure it only runs at scheduled times, not on startup
 });
 
 app.listen(port, () => {

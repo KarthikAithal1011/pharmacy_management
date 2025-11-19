@@ -1,158 +1,81 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Receipts - Pharmacy Management</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: white;
-      min-height: 100vh;
-      color: #374151;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #4a5568;
-      margin-bottom: 10px;
-    }
-    .full-line {
-      height: 2px;
-      background: #4a5568;
-      margin: 0 -30px 20px -30px;
-    }
-    form {
-      margin-bottom: 30px;
-      text-align: center;
-      border: 2px solid #000000;
-      padding: 20px;
-      border-radius: 10px;
-      background: white;
-    }
-    label {
-      display: block;
-      margin-bottom: 10px;
-      font-weight: 500;
-    }
-    input {
-      padding: 10px;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      font-size: 16px;
-      width: 200px;
-    }
-    button {
-      padding: 10px 20px;
-      background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    li {
-      background: #f8fafc;
-      margin: 10px 0;
-      padding: 15px;
-      border-radius: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    a {
-      background: #F59E0B;
-      color: white;
-      padding: 8px 15px;
-      text-decoration: none;
-      border-radius: 5px;
-    }
-    .even-row {
-      background: #f8fafc;
-    }
-    .odd-row {
-      background: white;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
+<div class="container">
     <h1><i class="fas fa-receipt"></i> Receipts</h1>
     <div class="full-line"></div>
     <% if (purchases && purchases.length > 0) { %>
-      <h2 style="text-align: center; color: #4a5568; margin: 30px 0 20px 0;"><i class="fas fa-list"></i> Purchase Summary</h2>
+      <h2 class="text-2xl font-bold text-center text-gray-700 my-8"><i class="fas fa-list"></i> Purchase Summary</h2>
 
-      <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
-          <thead>
-            <tr style="background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%); color: white;">
-              <th style="padding: 15px; text-align: left; font-weight: 600;"><i class="fas fa-pills"></i> Medicine</th>
-              <th style="padding: 15px; text-align: center; font-weight: 600;"><i class="fas fa-hashtag"></i> Tablets Bought</th>
-              <th style="padding: 15px; text-align: center; font-weight: 600;"><i class="fas fa-rupee-sign"></i> Price per Tablet</th>
-              <th style="padding: 15px; text-align: center; font-weight: 600;"><i class="fas fa-calculator"></i> Total</th>
+      <div class="overflow-x-auto shadow-md sm:rounded-lg">
+        <table class="w-full text-sm text-left text-gray-500">
+          <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3"><i class="fas fa-pills"></i> Medicine</th>
+              <th scope="col" class="px-6 py-3 text-center"><i class="fas fa-hashtag"></i> Tablets Bought</th>
+              <th scope="col" class="px-6 py-3 text-center"><i class="fas fa-rupee-sign"></i> Price per Tablet</th>
+              <th scope="col" class="px-6 py-3 text-center"><i class="fas fa-calculator"></i> Total</th>
             </tr>
           </thead>
           <tbody>
             <% purchases.forEach((purchase, index) => { %>
-              <tr class="<%= index % 2 === 0 ? 'even-row' : 'odd-row' %>">
-                <td style="padding: 15px; font-weight: 500;"><%= purchase.medicine %></td>
-                <td style="padding: 15px; text-align: center;"><%= purchase.quantity %></td>
-                <td style="padding: 15px; text-align: center;">₹<%= purchase.pricePerTablet.toFixed(2) %></td>
-                <td style="padding: 15px; text-align: center; font-weight: 600;">₹<%= purchase.total.toFixed(2) %></td>
+              <tr class="bg-white border-b hover:bg-gray-50">
+                <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"><%= purchase.medicine %></td>
+                <td class="px-6 py-4 text-center"><%= purchase.quantity %></td>
+                <td class="px-6 py-4 text-center">₹<%= purchase.pricePerTablet.toFixed(2) %></td>
+                <td class="px-6 py-4 text-center font-semibold">₹<%= purchase.total.toFixed(2) %></td>
               </tr>
             <% }); %>
-            <tr style="background: linear-gradient(135deg, #10B981 0%, #34D399 100%); color: white; font-weight: 700; font-size: 18px;">
-              <td colspan="3" style="padding: 20px; text-align: right;">Subtotal:</td>
-              <td style="padding: 20px; text-align: center;">₹<%= grandTotal.toFixed(2) %></td>
+            <tr class="bg-gray-100 font-semibold text-gray-900">
+              <td colspan="3" class="px-6 py-4 text-right">Subtotal:</td>
+              <td class="px-6 py-4 text-center">₹<%= grandTotal.toFixed(2) %></td>
             </tr>
             <% if (discountPercent > 0) { %>
-            <tr style="background: linear-gradient(135deg, #10B981 0%, #34D399 100%); color: white; font-weight: 700; font-size: 16px;">
-              <td colspan="3" style="padding: 15px; text-align: right;">Discount (<%= discountPercent %>%):</td>
-              <td style="padding: 15px; text-align: center;">-₹<%= discountAmount.toFixed(2) %></td>
+            <tr class="bg-gray-100 font-semibold text-gray-900">
+              <td colspan="3" class="px-6 py-4 text-right">Discount (<%= discountPercent %>%):</td>
+              <td class="px-6 py-4 text-center">-₹<%= discountAmount.toFixed(2) %></td>
             </tr>
             <% } %>
-            <tr style="background: linear-gradient(135deg, #10B981 0%, #34D399 100%); color: white; font-weight: 700; font-size: 18px;">
-              <td colspan="3" style="padding: 20px; text-align: right;">Total Amount:</td>
-              <td style="padding: 20px; text-align: center;">₹<%= discountedTotal.toFixed(2) %></td>
+            <tr class="bg-gray-200 font-bold text-gray-900 text-base">
+              <td colspan="3" class="px-6 py-4 text-right">Total Amount:</td>
+              <td class="px-6 py-4 text-center">₹<%= discountedTotal.toFixed(2) %></td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <form action="/generate-receipts" method="POST" style="text-align: center; margin: 30px 0;">
-        <label for="patientName"><i class="fas fa-user"></i> Patient Name:</label>
-        <input type="text" name="patientName" id="patientName" required placeholder="Enter patient name">
+      <form action="/generate-receipts" method="POST" class="text-center my-8">
+        <label for="patientName" class="font-bold"><i class="fas fa-user"></i> Patient Name:</label>
+        <input type="text" name="patientName" id="patientName" placeholder="Enter patient name (optional)" class="mt-2 px-4 py-2 border rounded-md">
         <br>
-        <button type="submit" style="margin-top: 15px;"><i class="fas fa-check"></i> Generate Report</button>
+        <button type="submit" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"><i class="fas fa-check"></i> Generate Report</button>
       </form>
 
-      <div style="text-align: center; margin-top: 20px;">
-        <a href="/download-pdf" style="background: #F59E0B; color: white; padding: 12px 25px; text-decoration: none; border-radius: 10px; font-size: 16px; display: inline-block;">
-          <i class="fas fa-download"></i> Download PDF
-        </a>
-      </div>
+      <% if (generated) { %>
+        <div class="text-center mt-4">
+          <p class="text-green-600 font-semibold">Report generated</p>
+        </div>
+
+        <div class="text-center mt-4">
+          <button onclick="printReceipt()" class="text-blue-600 hover:underline mr-4">
+            <i class="fas fa-print"></i> Print Report
+          </button>
+          <a href="/download-pdf" class="text-blue-600 hover:underline">
+            <i class="fas fa-download"></i> Download PDF
+          </a>
+        </div>
+      <% } %>
+
+      <script>
+        function printReceipt() {
+          // Open the PDF in a new window and print it
+          const printWindow = window.open('/download-pdf', '_blank');
+          setTimeout(() => {
+            printWindow.print();
+          }, 1000); // Wait for PDF to load before printing
+        }
+      </script>
     <% } %>
-    <div style="text-align: center; margin-top: 30px;">
-      <a href="/view-dashboard?clear=true" style="background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%); color: white; padding: 12px 25px; text-decoration: none; border-radius: 10px; font-size: 16px; display: inline-block;">
+    <div class="text-center mt-8">
+      <a href="/view-dashboard?clear=true" class="inline-block px-6 py-3 bg-green-600 text-white rounded-full font-semibold hover:bg-green-700 transition-colors">
         <i class="fas fa-arrow-left"></i> Back to Dashboard
       </a>
     </div>
   </div>
-</body>
-</html>
