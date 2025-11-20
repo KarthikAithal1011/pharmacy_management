@@ -55,6 +55,21 @@
       transform: translateY(-2px);
       box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
     }
+    .logout-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 25px;
+      background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .logout-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -66,11 +81,10 @@
       <p><i class="fas fa-rupee-sign"></i> Total Collection (After Discount): ₹<%= totalAfterDiscount.toFixed(2) %></p>
     </div>
     <a href="/menu" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Menu</a>
-    <div class="logout">
-      <a href="/logout">
-        <i class="fas fa-sign-out-alt"></i> Logout
-      </a>
-    </div>
+    <br>
+    <a href="/logout" class="logout-btn">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
   </div>
 </body>
 </html>
