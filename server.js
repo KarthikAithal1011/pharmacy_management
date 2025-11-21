@@ -44,6 +44,9 @@ db.connect((err) => {
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(express.json());
+
 app.use(session({
   secret: 'pharmacy_secret',
   resave: false,
@@ -758,6 +761,372 @@ cron.schedule('59 23 * * *', () => {
 }, {
   timezone: "Asia/Kolkata", // Adjust timezone as needed
   scheduled: true // Ensure it only runs at scheduled times, not on startup
+});
+
+// JWT Authentication Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  jwt.verify(token, 'pharmacy_jwt_secret', (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+// API Routes
+// Authentication
+app.post('/api/v1/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password required' });
+  }
+
+  db.query('SELECT * FROM admin_login WHERE username = ? AND password = ?', [username, password], (err, results) => {
+    if (err) {
+      console.error('Login error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    if (results.length > 0) {
+      const token = jwt.sign(
+        { username: username },
+        'pharmacy_jwt_secret',
+        { expiresIn: '24h' }
+      );
+      res.json({ token, username });
+    } else {
+      res.status(401).json({ error: 'Invalid credentials' });
+    }
+  });
+});
+
+// Medicines
+app.get('/api/v1/medicines', authenticateToken, (req, res) => {
+  db.query('SELECT * FROM stock_available', (err, results) => {
+    if (err) {
+      console.error('Error fetching medicines:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    res.json(results);
+  });
+});
+
+app.post('/api/v1/medicines', authenticateToken, (req, res) => {
+  const { medicine, quantity, price_per_strip, tablets_in_a_strip } = req.body;
+  const qty = parseInt(quantity);
+  const price = parseFloat(price_per_strip);
+  const tablets = parseInt(tablets_in_a_strip);
+
+  if (!medicine || medicine.trim() === '' || isNaN(qty) || qty <= 0 || isNaN(price) || price <= 0 || isNaN(tablets) || tablets <= 0) {
+    return res.status(400).json({ error: 'Invalid input data' });
+  }
+
+  // Check if medicine already exists
+  db.query('SELECT medicine FROM stock_available WHERE medicine = ?', [medicine], (err, results) => {
+    if (err) {
+      console.error('Error checking medicine existence:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    if (results.length > 0) {
+      return res.status(409).json({ error: 'Medicine already exists' });
+    }
+
+    // Insert new medicine
+    db.query('INSERT INTO stock_available (medicine, stock, price_per_strip, tablets_in_a_strip, tablets_used_in_current_strip) VALUES (?, ?, ?, ?, 0)',
+      [medicine, qty, price, tablets], (err) => {
+      if (err) {
+        console.error('Error adding medicine:', err);
+        return res.status(500).json({ error: 'Failed to add medicine' });
+      }
+      res.status(201).json({ message: 'Medicine added successfully' });
+    });
+  });
+});
+
+// Stock Management
+app.put('/api/v1/medicines/:medicine/stock', authenticateToken, (req, res) => {
+  const { medicine } = req.params;
+  const { quantity } = req.body;
+  const qty = parseInt(quantity);
+
+  if (isNaN(qty) || qty <= 0) {
+    return res.status(400).json({ error: 'Invalid quantity' });
+  }
+
+  // Check if medicine exists
+  db.query('SELECT stock FROM stock_available WHERE medicine = ?', [medicine], (err, results) => {
+    if (err) {
+      console.error('Error checking medicine:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Medicine not found' });
+    }
+
+    // Update stock
+    const newStock = results[0].stock + qty;
+    db.query('UPDATE stock_available SET stock = ? WHERE medicine = ?', [newStock, medicine], (err) => {
+      if (err) {
+        console.error('Error updating stock:', err);
+        return res.status(500).json({ error: 'Failed to update stock' });
+      }
+      res.json({ message: 'Stock updated successfully' });
+    });
+  });
+});
+
+// Cart Management (using session for simplicity, but could be moved to database)
+app.get('/api/v1/cart', authenticateToken, (req, res) => {
+  const purchases = req.session.purchases || [];
+  res.json(purchases);
+});
+
+app.post('/api/v1/cart/add', authenticateToken, (req, res) => {
+  const { medicine, quantity } = req.body;
+  const qty = parseInt(quantity);
+
+  if (isNaN(qty) || qty <= 0) {
+    return res.status(400).json({ error: 'Invalid quantity' });
+  }
+
+  // Check if medicine exists and get stock info
+  db.query('SELECT tablets_in_a_strip, stock, tablets_used_in_current_strip FROM stock_available WHERE medicine = ?', [medicine], (err, results) => {
+    if (err) {
+      console.error('Error checking medicine:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Medicine not found' });
+    }
+    if (results[0].stock <= 0) {
+      return res.status(400).json({ error: 'Medicine out of stock' });
+    }
+
+    const tabletsInStrip = results[0].tablets_in_a_strip;
+    const stock = results[0].stock;
+    const tabletsUsed = results[0].tablets_used_in_current_strip || 0;
+    const totalAvailableTablets = (stock * tabletsInStrip) - tabletsUsed;
+
+    if (qty > totalAvailableTablets) {
+      return res.status(400).json({ error: 'Insufficient stock' });
+    }
+
+    // Initialize purchases array if not exists
+    if (!req.session.purchases) {
+      req.session.purchases = [];
+    }
+
+    // Add to cart
+    req.session.purchases.push({ medicine, quantity: qty });
+    res.json({ message: 'Added to cart successfully' });
+  });
+});
+
+app.delete('/api/v1/cart/:index', authenticateToken, (req, res) => {
+  const index = parseInt(req.params.index);
+  if (isNaN(index) || index < 0 || !req.session.purchases || index >= req.session.purchases.length) {
+    return res.status(400).json({ error: 'Invalid item index' });
+  }
+
+  req.session.purchases.splice(index, 1);
+  res.json({ message: 'Item removed from cart' });
+});
+
+app.delete('/api/v1/cart', authenticateToken, (req, res) => {
+  req.session.purchases = [];
+  res.json({ message: 'Cart cleared' });
+});
+
+// Checkout
+app.post('/api/v1/cart/checkout', authenticateToken, (req, res) => {
+  if (!req.session.purchases || req.session.purchases.length === 0) {
+    return res.status(400).json({ error: 'Cart is empty' });
+  }
+
+  const purchases = req.session.purchases;
+  let errors = [];
+  let completed = 0;
+
+  purchases.forEach((purchase, index) => {
+    db.query('SELECT stock, tablets_in_a_strip, tablets_used_in_current_strip FROM stock_available WHERE medicine = ?', [purchase.medicine], (err, results) => {
+      if (err) {
+        errors.push(`Error checking stock for ${purchase.medicine}`);
+        return;
+      }
+      if (results.length === 0) {
+        errors.push(`Medicine ${purchase.medicine} not found`);
+        return;
+      }
+
+      const currentStock = results[0].stock;
+      const tabletsInStrip = results[0].tablets_in_a_strip;
+      const tabletsUsedInCurrentStrip = results[0].tablets_used_in_current_strip || 0;
+
+      const tabletsAvailableInCurrentStrip = tabletsInStrip - tabletsUsedInCurrentStrip;
+      const tabletsAvailableInFullStrips = currentStock * tabletsInStrip;
+      const totalTabletsAvailable = tabletsAvailableInCurrentStrip + tabletsAvailableInFullStrips;
+
+      if (totalTabletsAvailable < purchase.quantity) {
+        errors.push(`Insufficient stock for ${purchase.medicine}`);
+        return;
+      }
+
+      let tabletsToProcess = purchase.quantity;
+      let newStock = currentStock;
+      let newTabletsUsedInCurrentStrip = tabletsUsedInCurrentStrip;
+
+      newTabletsUsedInCurrentStrip += tabletsToProcess;
+      const completeStripsToDeduct = Math.floor(newTabletsUsedInCurrentStrip / tabletsInStrip);
+      if (completeStripsToDeduct > 0) {
+        newStock -= completeStripsToDeduct;
+        newTabletsUsedInCurrentStrip = newTabletsUsedInCurrentStrip % tabletsInStrip;
+      }
+
+      db.query('UPDATE stock_available SET stock = ?, tablets_used_in_current_strip = ? WHERE medicine = ?',
+        [newStock, newTabletsUsedInCurrentStrip, purchase.medicine], (err) => {
+        if (err) {
+          errors.push(`Error updating stock for ${purchase.medicine}`);
+          return;
+        }
+        completed++;
+        if (completed === purchases.length) {
+          if (errors.length > 0) {
+            return res.status(400).json({ error: errors.join(', ') });
+          }
+
+          // Calculate totals and update transactions
+          let processedPurchases = [];
+          let calcCompleted = 0;
+
+          purchases.forEach((purchase, idx) => {
+            db.query('SELECT price_per_strip, tablets_in_a_strip FROM stock_available WHERE medicine = ?', [purchase.medicine], (err, results) => {
+              if (err) {
+                console.error('Error fetching price:', err);
+                return;
+              }
+              if (results.length > 0) {
+                const pricePerStrip = results[0].price_per_strip;
+                const tabletsInStrip = results[0].tablets_in_a_strip;
+                const pricePerTablet = pricePerStrip / tabletsInStrip;
+                const total = purchase.quantity * pricePerTablet;
+
+                processedPurchases.push({
+                  medicine: purchase.medicine,
+                  quantity: purchase.quantity,
+                  pricePerTablet: pricePerTablet,
+                  total: total
+                });
+              }
+
+              calcCompleted++;
+              if (calcCompleted === purchases.length) {
+                let grandTotal = processedPurchases.reduce((sum, p) => sum + p.total, 0);
+                let discountPercent = 0;
+                if (grandTotal > 1000) discountPercent = 15;
+                else if (grandTotal > 500) discountPercent = 5;
+                else if (grandTotal > 200) discountPercent = 3;
+                let discountAmount = grandTotal * discountPercent / 100;
+                let discountedTotal = grandTotal - discountAmount;
+
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0];
+
+                db.query('SELECT * FROM transactions WHERE date = ?', [dateStr], (err, results) => {
+                  if (err) {
+                    console.error('Error checking daily collection:', err);
+                    return res.status(500).json({ error: 'Database error' });
+                  }
+
+                  if (results.length > 0) {
+                    const currentBefore = parseFloat(results[0].total_before_discount) || 0;
+                    const currentAfter = parseFloat(results[0].total_after_discount) || 0;
+
+                    db.query('UPDATE transactions SET total_before_discount = ?, total_after_discount = ? WHERE date = ?',
+                      [currentBefore + grandTotal, currentAfter + discountedTotal, dateStr], (err) => {
+                      if (err) {
+                        console.error('Error updating daily collection:', err);
+                        return res.status(500).json({ error: 'Database error' });
+                      }
+                      req.session.receiptPurchases = purchases.slice();
+                      res.json({
+                        message: 'Purchase completed successfully',
+                        receipt: {
+                          purchases: processedPurchases,
+                          grandTotal,
+                          discountPercent,
+                          discountAmount,
+                          discountedTotal
+                        }
+                      });
+                    });
+                  } else {
+                    db.query('INSERT INTO transactions (date, total_before_discount, total_after_discount) VALUES (?, ?, ?)',
+                      [dateStr, grandTotal, discountedTotal], (err) => {
+                      if (err) {
+                        console.error('Error inserting daily collection:', err);
+                        return res.status(500).json({ error: 'Database error' });
+                      }
+                      req.session.receiptPurchases = purchases.slice();
+                      res.json({
+                        message: 'Purchase completed successfully',
+                        receipt: {
+                          purchases: processedPurchases,
+                          grandTotal,
+                          discountPercent,
+                          discountAmount,
+                          discountedTotal
+                        }
+                      });
+                    });
+                  }
+                });
+              }
+            });
+          });
+        }
+      });
+    });
+  });
+});
+
+// Reports
+app.get('/api/v1/reports/daily', authenticateToken, (req, res) => {
+  const today = new Date();
+  const dateStr = today.toISOString().split('T')[0];
+
+  const query = `
+    SELECT
+      total_before_discount AS totalBeforeDiscount,
+      total_after_discount AS totalAfterDiscount
+    FROM transactions
+    WHERE date = ?
+  `;
+
+  db.query(query, [dateStr], (err, results) => {
+    if (err) {
+      console.error('Error fetching daily collection:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    const data = results[0] || {
+      totalBeforeDiscount: 0,
+      totalAfterDiscount: 0
+    };
+
+    res.json({
+      date: dateStr,
+      totalBeforeDiscount: Number(data.totalBeforeDiscount) || 0,
+      totalAfterDiscount: Number(data.totalAfterDiscount) || 0
+    });
+  });
 });
 
 app.listen(port, () => {
