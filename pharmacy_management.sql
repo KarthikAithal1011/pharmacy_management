@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 05, 2025 at 11:09 AM
+-- Generation Time: Nov 21, 2025 at 08:25 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -46,61 +46,59 @@ INSERT INTO `admin_login` (`username`, `password`) VALUES
 --
 
 CREATE TABLE `stock_available` (
-  `medicine` varchar(25) NOT NULL,
+  `medicine` varchar(50) DEFAULT NULL,
   `stock` int(11) NOT NULL,
   `price_per_strip` int(11) DEFAULT NULL,
   `tablets_in_a_strip` int(11) DEFAULT NULL,
-  `tablets_used_in_current_strip` int(11) DEFAULT 0
+  `tablets_used_in_current_strip` int(11) DEFAULT 0,
+  `expiry_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `stock_available`
 --
 
-INSERT INTO `stock_available` (`medicine`, `stock`, `price_per_strip`, `tablets_in_a_strip`, `tablets_used_in_current_strip`) VALUES
-('Paracetamol', 32, 35, 10, 2),
-('Ibuprofen', 23, 50, 10, 0),
-('Amoxicillin', 54, 95, 6, 0),
-('Metformin', 100, 40, 10, 0),
-('Atorvastatin', 74, 120, 10, 0),
-('Omeprazole', 86, 65, 15, 0),
-('Cetirizine', 150, 25, 10, 0),
-('Azithromycin', 40, 110, 6, 0),
-('Losartan', 55, 85, 10, 0),
-('Salbutamol', 29, 70, 10, 0),
-('Amlodipine', 65, 60, 10, 0),
-('Ciprofloxacin', 44, 90, 10, 0),
-('Doxycycline', 70, 80, 8, 0),
-('Hydrochlorothiazide', 80, 55, 10, 0),
-('Clopidogrel', 50, 140, 10, 0),
-('Levothyroxine', 95, 35, 15, 0),
-('Prednisolone', 40, 75, 10, 0),
-('Lisinopril', 60, 100, 10, 0),
-('Glibenclamide', 70, 45, 10, 0),
-('Pantoprazole', 84, 70, 15, 0),
-('Diclofenac', 100, 40, 10, 0),
-('Furosemide', 75, 50, 10, 0),
-('Insulin Glargine', 16, 300, 1, 0),
-('Ranitidine', 90, 55, 10, 0),
-('Simvastatin', 50, 110, 10, 0),
-('Sertraline', 40, 160, 10, 0),
-('Tramadol', 23, 130, 10, 0),
-('Fluconazole', 55, 95, 4, 0),
-('Montelukast', 60, 125, 10, 0),
-('Domperidone', 95, 65, 10, 0),
-('Clarithromycin', 45, 120, 6, 0),
-('Erythromycin', 30, 85, 8, 0),
-('Cefixime', 70, 150, 10, 0),
-('Naproxen', 80, 75, 10, 0),
-('Carbamazepine', 40, 140, 10, 0),
-('Warfarin', 50, 90, 10, 0),
-('Aspirin', 120, 30, 10, 0),
-('Vitamin D3', 148, 180, 4, 0),
-('Iron Supplement', 98, 70, 15, 0),
-('Calcium Carbonate', 89, 95, 10, 0),
-('Brivup(50 mg)', 65, 190, 10, 0),
-('Brivup(25 mg)', 51, 34, 7, 0),
-('Supradyn', 48, 72, 15, 0);
+INSERT INTO `stock_available` (`medicine`, `stock`, `price_per_strip`, `tablets_in_a_strip`, `tablets_used_in_current_strip`, `expiry_date`) VALUES
+('Metformin 500mg', 180, 42, 10, 0, '2027-02-14'),
+('Aspirin 75mg', 300, 28, 14, 0, '2026-11-09'),
+('Pantoprazole 40mg', 160, 55, 10, 0, '2027-06-22'),
+('Ranitidine 150mg', 130, 38, 10, 0, '2026-03-30'),
+('Doxycycline 100mg', 90, 110, 8, 0, '2026-10-04'),
+('Vitamin C 500mg', 250, 60, 15, 0, '2028-08-29'),
+('Iron Folic Acid', 220, 75, 10, 0, '2027-01-17'),
+('Calcium + Vitamin D3', 140, 95, 15, 0, '2026-12-03'),
+('Levocetirizine 5mg', 210, 22, 10, 0, '2027-07-11'),
+('Montelukast 10mg', 100, 130, 10, 0, '2028-05-19'),
+('Atorvastatin 10mg', 160, 150, 10, 0, '2027-04-16'),
+('Amlodipine 5mg', 180, 45, 15, 0, '2026-09-27'),
+('Losartan 50mg', 150, 85, 10, 0, '2028-01-02'),
+('Telmisartan 40mg', 140, 95, 10, 0, '2027-11-23'),
+('Metoprolol 50mg', 110, 88, 10, 0, '2026-06-08'),
+('Clopidogrel 75mg', 75, 165, 14, 0, '2028-02-15'),
+('Hydroxychloroquine 200mg', 60, 120, 10, 0, '2027-10-25'),
+('Thyroxine 50mcg', 200, 30, 15, 0, '2028-05-07'),
+('Thyroxine 100mcg', 190, 52, 15, 0, '2027-09-13'),
+('Omeprazole 20mg', 180, 48, 10, 0, '2028-03-21'),
+('Fexofenadine 120mg', 170, 140, 10, 0, '2026-12-17'),
+('Sodium Bicarbonate 500mg', 130, 20, 15, 0, '2027-05-05'),
+('Loratadine 10mg', 210, 24, 10, 0, '2028-02-09'),
+('Multivitamin Tablets', 240, 160, 10, 0, '2027-04-04'),
+('Cough Syrup Tablets', 90, 70, 10, 0, '2026-08-28'),
+('Antacid Chewable', 200, 32, 12, 0, '2027-11-12'),
+('ORS Tablets', 250, 18, 10, 0, '2026-09-01'),
+('Zinc 50mg', 170, 55, 10, 0, '2026-06-14'),
+('Probiotic Capsules', 130, 140, 8, 0, '2027-07-07'),
+('Azithromycin 500mg', 60, 150, 3, 0, '2026-07-16'),
+('Cefixime 200mg', 80, 180, 10, 0, '2028-01-30'),
+('Cetirizine + Pseudoephedrine', 90, 85, 10, 0, '2027-08-08'),
+('B Complex', 220, 48, 10, 0, '2028-02-19'),
+('Melatonin 3mg', 75, 210, 10, 0, '2027-10-22'),
+('Ginkgo Biloba', 13, 260, 10, 0, '2026-09-10'),
+('Folic Acid 5mg', 200, 30, 10, 0, '2027-06-11'),
+('Lisinopril 10mg', 160, 90, 10, 0, '2028-01-26'),
+('Prednisolone 10mg', 120, 70, 10, 0, '2027-03-02'),
+('Diclofenac 50mg', 180, 40, 10, 0, '2028-04-30'),
+('Tramadol 50mg', 50, 160, 10, 0, '2027-12-03');
 
 -- --------------------------------------------------------
 
@@ -120,7 +118,15 @@ CREATE TABLE `transactions` (
 --
 
 INSERT INTO `transactions` (`id`, `date`, `total_before_discount`, `total_after_discount`) VALUES
-(1, '2025-11-05', 2850.00, 2737.00);
+(1, '2025-11-05', 2850.00, 2737.00),
+(2, '2025-11-06', 1675.00, 1450.00),
+(3, '2025-11-07', 5760.00, 4896.00),
+(4, '2025-11-08', 70.00, 70.00),
+(5, '2025-11-10', 248.00, 248.00),
+(6, '2025-11-12', 900.00, 855.00),
+(7, '2025-11-14', 1455.00, 1429.65),
+(8, '2025-11-19', 785.00, 785.00),
+(9, '2025-11-21', 10880.00, 9339.00);
 
 --
 -- Indexes for dumped tables
@@ -141,7 +147,7 @@ ALTER TABLE `transactions`
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

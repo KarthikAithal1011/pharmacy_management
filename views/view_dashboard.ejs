@@ -359,6 +359,34 @@
       </div>
     <% } %>
 
+    <% 
+      const expiringSoon = medicines.filter(medicine => {
+        if (!medicine.expiry_date) return false;
+        const today = new Date();
+        const expiryDate = new Date(medicine.expiry_date);
+        const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+        return daysUntilExpiry >= 0 && daysUntilExpiry <= 30;
+      });
+      const expired = medicines.filter(medicine => {
+        if (!medicine.expiry_date) return false;
+        const today = new Date();
+        const expiryDate = new Date(medicine.expiry_date);
+        const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+        return daysUntilExpiry < 0;
+      });
+    %>
+
+    <% if (expired.length > 0) { %>
+      <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #dc2626; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 8px solid #dc2626; font-size: 18px; font-weight: bold; box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3); animation: pulse 2s infinite;">
+        <i class="fas fa-exclamation-triangle" style="font-size: 28px; margin-right: 10px;"></i>
+        <strong style="font-size: 22px;">⚠️ EXPIRED MEDICINES ALERT:</strong><br>
+        The following medicines have expired and should not be dispensed: 
+        <strong><%= expired.map(m => m.medicine).join(', ') %></strong>
+      </div>
+    <% } %>
+
+
+
     <div class="content-grid">
       <div class="main-content">
         <h2><i class="fas fa-list"></i> Medicines and Stocks Available</h2>
@@ -371,6 +399,7 @@
               <th><i class="fas fa-tablets"></i> Tablets per Strip</th>
               <th><i class="fas fa-tablets"></i> Tablets Used in Current Strip</th>
               <th><i class="fas fa-rupee-sign"></i> Price per Tablet</th>
+              <th><i class="fas fa-calendar-alt"></i> Expiry Date</th>
             </tr>
           </thead>
           <tbody>
@@ -387,6 +416,23 @@
                 <td><%= medicine.tablets_in_a_strip %></td>
                 <td><%= medicine.tablets_used_in_current_strip || 0 %></td>
                 <td>₹<%=(medicine.price_per_strip / medicine.tablets_in_a_strip).toFixed(2) %></td>
+                <td>
+                  <% if (medicine.expiry_date) { %>
+                    <%
+                      const today = new Date();
+                      const expiryDate = new Date(medicine.expiry_date);
+                      const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                    %>
+                    <%= new Date(medicine.expiry_date).toLocaleDateString() %>
+                    <% if (daysUntilExpiry < 0) { %>
+                      <br><span class="alert-text" style="color: red; font-size: 14px; font-weight: bold;">(EXPIRED)</span>
+                    <% } else if (daysUntilExpiry <= 30) { %>
+                      <br><span class="alert-text" style="color: red; font-size: 14px; font-weight: bold;">(Expires in <%= daysUntilExpiry %> days)</span>
+                    <% } %>
+                  <% } else { %>
+                    N/A
+                  <% } %>
+                </td>
               </tr>
             <% }); %>
           </tbody>
@@ -461,7 +507,7 @@
     </div>
   </div>
   <script>
-    document.getElementById('searchButton').addEventListener('click', function() {
+    function performSearch() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
       const rows = document.querySelectorAll('tbody tr');
       rows.forEach(row => {
@@ -472,6 +518,14 @@
           row.style.display = 'none';
         }
       });
+    }
+
+    document.getElementById('searchButton').addEventListener('click', performSearch);
+
+    document.getElementById('searchInput').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        performSearch();
+      }
     });
 
     document.getElementById('add-more').addEventListener('click', function() {

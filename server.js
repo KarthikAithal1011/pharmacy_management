@@ -37,6 +37,7 @@ db.connect((err) => {
   db.changeUser({ database: 'pharmacy_management' }, (err) => {
     if (err) throw err;
 
+
   });
 });
 
@@ -397,12 +398,12 @@ app.post('/add-medicine', (req, res) => {
   if (!req.session.loggedin) {
     return res.redirect('/');
   }
-  const { medicine, quantity, price_per_strip, tablets_in_a_strip } = req.body;
+  const { medicine, quantity, price_per_strip, tablets_in_a_strip, expiry_date } = req.body;
   const qty = parseInt(quantity);
   const price = parseFloat(price_per_strip);
   const tablets = parseInt(tablets_in_a_strip);
 
-  if (!medicine || medicine.trim() === '' || isNaN(qty) || qty <= 0 || isNaN(price) || price <= 0 || isNaN(tablets) || tablets <= 0) {
+  if (!medicine || medicine.trim() === '' || isNaN(qty) || qty <= 0 || isNaN(price) || price <= 0 || isNaN(tablets) || tablets <= 0 || !expiry_date) {
     return res.redirect('/view-dashboard?error=Invalid input data. Please check all fields.');
   }
 
@@ -415,8 +416,8 @@ app.post('/add-medicine', (req, res) => {
     if (results.length > 0) {
       return res.redirect('/view-dashboard?error=Medicine already exists. Use "Add Stock" to increase stock for existing medicines.');
     }
-    // Insert new medicine with all details
-    db.query('INSERT INTO stock_available (medicine, stock, price_per_strip, tablets_in_a_strip, tablets_used_in_current_strip) VALUES (?, ?, ?, ?, 0)', [medicine, qty, price, tablets], (err) => {
+    // Insert new medicine with all details including expiry_date
+    db.query('INSERT INTO stock_available (medicine, stock, price_per_strip, tablets_in_a_strip, tablets_used_in_current_strip, expiry_date) VALUES (?, ?, ?, ?, 0, ?)', [medicine, qty, price, tablets, expiry_date], (err) => {
       if (err) {
         console.error('Error adding medicine:', err);
       res.redirect('/view-dashboard?error=Failed to add medicine. Please try again.');
