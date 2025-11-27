@@ -3,8 +3,8 @@ Pharmacy Management System
 This is a web-based application for managing a pharmacy's inventory and sales. It provides a simple interface for administrators to manage stock, handle billing, and track daily sales.
 
 Features:
--Admin Authentication: Secure login for administrators.
-- 
+Admin Authentication: Secure login for administrators.
+
 Stock Management:
   - Add new medicines to the inventory.
   - Update stock levels for existing medicines.
