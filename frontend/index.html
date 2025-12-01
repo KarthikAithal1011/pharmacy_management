@@ -40,6 +40,12 @@
             <div id="cart-section" class="content-section hidden">
                 <h2>Shopping Cart</h2>
                 <div id="cart-items"></div>
+                <div id="checkout-form" class="hidden">
+                    <h3>Checkout Details</h3>
+                    <input type="text" id="customer-name" placeholder="Customer Name" required>
+                    <button id="confirm-checkout-btn">Confirm Purchase</button>
+                    <button id="cancel-checkout-btn">Cancel</button>
+                </div>
                 <button id="checkout-btn">Checkout</button>
             </div>
 
@@ -67,6 +73,7 @@
 
             <div id="reports-section" class="content-section hidden">
                 <h2>Daily Collection Report</h2>
+                <button id="generate-report-btn" disabled>Generate Report</button>
                 <div id="daily-report"></div>
             </div>
         </div>

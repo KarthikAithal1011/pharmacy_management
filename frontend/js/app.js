@@ -4,6 +4,7 @@ class PharmacyApp {
         this.username = localStorage.getItem('username');
         this.cart = [];
         this.medicines = [];
+        this.purchaseConfirmed = false;
 
         this.init();
     }
@@ -42,7 +43,9 @@ class PharmacyApp {
         document.getElementById('add-stock-btn').addEventListener('click', () => this.addStock());
 
         // Checkout
-        document.getElementById('checkout-btn').addEventListener('click', () => this.checkout());
+        document.getElementById('checkout-btn').addEventListener('click', () => this.showCheckoutForm());
+        document.getElementById('confirm-checkout-btn').addEventListener('click', () => this.confirmCheckout());
+        document.getElementById('cancel-checkout-btn').addEventListener('click', () => this.cancelCheckout());
 
         // Receipt modal close
         document.querySelector('.close').addEventListener('click', () => this.closeReceiptModal());
@@ -82,6 +85,7 @@ class PharmacyApp {
         localStorage.removeItem('token');
         localStorage.removeItem('username');
         this.cart = [];
+        this.purchaseConfirmed = false;
         this.showLogin();
     }
 
@@ -104,7 +108,14 @@ class PharmacyApp {
         document.getElementById(`${section}-section`).classList.remove('hidden');
 
         if (section === 'cart') this.loadCart();
-        if (section === 'reports') this.loadDailyReport();
+        if (section === 'reports') {
+            this.loadDailyReport();
+            // Ensure button is disabled if not confirmed
+            const generateBtn = document.getElementById('generate-report-btn');
+            if (generateBtn) {
+                generateBtn.disabled = !this.purchaseConfirmed;
+            }
+        }
         if (section === 'admin') this.loadAdminData();
     }
 
@@ -244,16 +255,40 @@ class PharmacyApp {
         }
     }
 
-    async checkout() {
+    checkout() {
+        // This method is no longer used, replaced by showCheckoutForm
+    }
+
+    showCheckoutForm() {
         if (this.cart.length === 0) {
             alert('Cart is empty');
+            return;
+        }
+        document.getElementById('checkout-btn').classList.add('hidden');
+        document.getElementById('checkout-form').classList.remove('hidden');
+    }
+
+    cancelCheckout() {
+        document.getElementById('checkout-btn').classList.remove('hidden');
+        document.getElementById('checkout-form').classList.add('hidden');
+        document.getElementById('customer-name').value = '';
+    }
+
+    async confirmCheckout() {
+        const customerName = document.getElementById('customer-name').value.trim();
+        if (!customerName) {
+            alert('Please enter customer name');
             return;
         }
 
         try {
             const response = await fetch('/api/v1/cart/checkout', {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${this.token}` }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify({ customerName })
             });
 
             const data = await response.json();
@@ -261,8 +296,15 @@ class PharmacyApp {
             if (response.ok) {
                 this.cart = [];
                 this.renderCart();
+                this.purchaseConfirmed = true;
+                // Update button state if reports section is active
+                const generateBtn = document.getElementById('generate-report-btn');
+                if (generateBtn && !document.getElementById('reports-section').classList.contains('hidden')) {
+                    generateBtn.disabled = false;
+                }
                 this.showReceipt(data.receipt);
                 this.loadMedicines(); // Refresh stock
+                this.cancelCheckout(); // Hide the form
             } else {
                 alert(data.error);
             }
@@ -403,6 +445,11 @@ class PharmacyApp {
             <p>Total Before Discount: ₹${data.totalBeforeDiscount.toFixed(2)}</p>
             <p>Total After Discount: ₹${data.totalAfterDiscount.toFixed(2)}</p>
         `;
+
+        // Update generate report button state
+        const generateBtn = document.getElementById('generate-report-btn');
+        generateBtn.disabled = !this.purchaseConfirmed;
+        generateBtn.addEventListener('click', () => this.loadDailyReport());
     }
 
     showError(elementId, message) {
