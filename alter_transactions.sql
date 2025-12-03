@@ -1,0 +1,2 @@
+ALTER TABLE transactions ADD COLUMN receipt_id VARCHAR(255) NOT NULL DEFAULT 'UNKNOWN';
+ALTER TABLE transactions ADD COLUMN customer_name VARCHAR(255) NOT NULL DEFAULT 'Walk-in Customer';

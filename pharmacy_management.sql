@@ -148,10 +148,15 @@ INSERT INTO `stock_available` (`medicine`, `stock`, `price_per_strip`, `tablets_
 
 CREATE TABLE `transactions` (
   `id` int(11) NOT NULL,
+<<<<<<< HEAD
   `receipt_number` varchar(255) NOT NULL DEFAULT '',
+=======
+  `receipt_id` varchar(255) NOT NULL,
+  `customer_name` varchar(255) NOT NULL,
+>>>>>>> 84185da9410f800f5b8c78c1c45b631658493bf1
   `date` date NOT NULL,
-  `total_before_discount` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `total_after_discount` decimal(10,2) NOT NULL DEFAULT 0.00
+  `total_before_discount` decimal(10,2) NOT NULL,
+  `total_after_discount` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -186,8 +191,7 @@ ALTER TABLE `receipts`
 -- Indexes for table `transactions`
 --
 ALTER TABLE `transactions`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `date` (`date`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
