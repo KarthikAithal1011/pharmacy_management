@@ -1,0 +1,127 @@
+<div class="container mx-auto px-4">
+    <h1 class="text-3xl font-bold text-center text-gray-800 my-10"><i class="fas fa-file-invoice-dollar"></i> Detailed Sales Transactions</h1>
+
+    <!-- Date Picker Form -->
+    <div class="mb-10 max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
+        <form id="date-lookup-form" class="flex items-center space-x-4">
+            <label for="date" class="font-semibold text-gray-700">Enter Date:</label>
+            <input type="date" id="date" name="date" class="form-input flex-grow block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <i class="fas fa-search"></i> Get Sales
+            </button>
+        </form>
+    </div>
+
+    <!-- Sales Results Container -->
+    <div id="results-container" class="bg-white shadow-lg rounded-lg overflow-hidden" style="display: none;">
+        <h2 id="results-date-header" class="text-2xl font-bold text-center text-gray-700 py-4"></h2>
+        <table class="min-w-full leading-normal">
+            <thead class="bg-gray-800 text-white">
+                <tr>
+                    <th scope="col" class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                        Date
+                    </th>
+                    <th scope="col" class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                        Receipt Number
+                    </th>
+                    <th scope="col" class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold uppercase tracking-wider">
+                        Customer Name
+                    </th>
+                    <th scope="col" class="px-5 py-3 border-b-2 border-gray-200 text-right text-xs font-semibold uppercase tracking-wider">
+                        Total Amount
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="sales-table-body">
+                <!-- Rows will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+        <div id="no-results-message" class="text-center py-10" style="display: none;">
+            <p class="text-gray-500">No sales data found for the selected date.</p>
+        </div>
+    </div>
+
+    <div class="text-center mt-10">
+        <a href="/menu" class="inline-block px-8 py-3 bg-blue-600 text-white text-lg rounded-full font-bold hover:bg-blue-700 transition-transform transform hover:scale-105 shadow-lg">
+            <i class="fas fa-arrow-left"></i> Back to Menu
+        </a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('date-lookup-form');
+        const dateInput = document.getElementById('date');
+        const resultsContainer = document.getElementById('results-container');
+        const resultsHeader = document.getElementById('results-date-header');
+        const tableBody = document.getElementById('sales-table-body');
+        const noResultsMessage = document.getElementById('no-results-message');
+        const submitButton = form.querySelector('button[type="submit"]');
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const selectedDate = dateInput.value;
+            if (!selectedDate) {
+                return;
+            }
+
+            // Show loading state
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            resultsContainer.style.display = 'none';
+            noResultsMessage.style.display = 'none';
+            tableBody.innerHTML = '';
+
+            fetch(`/api/detailed-sales/${selectedDate}`)
+                .then(response => response.json())
+                .then(sales => {
+                    if (sales.error) {
+                        throw new Error(sales.error);
+                    }
+
+                    const dateParts = selectedDate.split('-');
+                    const utcDate = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]));
+                    const formattedDate = utcDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+                    
+                    resultsHeader.textContent = `Sales for ${formattedDate}`;
+                    resultsContainer.style.display = 'block';
+
+                    if (sales.length > 0) {
+                        let rowsHtml = '';
+                        sales.forEach(sale => {
+                            const saleDate = new Date(sale.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+                            rowsHtml += `
+                                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                    <td class="px-5 py-5 bg-white text-sm">
+                                        <p class="text-gray-900 whitespace-no-wrap">${saleDate}</p>
+                                    </td>
+                                    <td class="px-5 py-5 bg-white text-sm">
+                                        <p class="text-gray-900 whitespace-no-wrap">${sale.receipt_id}</p>
+                                    </td>
+                                    <td class="px-5 py-5 bg-white text-sm">
+                                        <p class="text-gray-900 whitespace-no-wrap">${sale.customer_name}</p>
+                                    </td>
+                                    <td class="px-5 py-5 bg-white text-sm text-right">
+                                        <p class="text-gray-900 whitespace-no-wrap font-semibold">₹${parseFloat(sale.total_after_discount).toFixed(2)}</p>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        tableBody.innerHTML = rowsHtml;
+                        noResultsMessage.style.display = 'none';
+                    } else {
+                        noResultsMessage.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    alert('An error occurred while fetching sales data.');
+                })
+                .finally(() => {
+                    // Restore button
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-search"></i> Get Sales';
+                });
+        });
+    });
+</script>

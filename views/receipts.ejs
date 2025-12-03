@@ -42,10 +42,19 @@
       </div>
 
       <form action="/generate-receipts" method="POST" class="text-center my-8">
-        <label for="patientName" class="font-bold"><i class="fas fa-user"></i> Patient Name:</label>
-        <input type="text" name="patientName" id="patientName" placeholder="Enter patient name (optional)" class="mt-2 px-4 py-2 border rounded-md">
+        <input type="hidden" name="action" value="">
+        <label for="patientName" class="font-bold"><i class="fas fa-user"></i> Customer Name:</label>
+        <input type="text" name="patientName" id="patientName" placeholder="Enter customer name (optional)" value="<%= patientName || '' %>" class="mt-2 px-4 py-2 border rounded-md">
         <br>
-        <button type="submit" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"><i class="fas fa-check"></i> Generate Report</button>
+
+        <div class="text-center my-4">
+          <button type="button" id="confirm-purchase-btn" onclick="confirmPurchase()" class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-semibold <%= confirmed ? 'opacity-50 cursor-not-allowed' : '' %>" <%= confirmed ? 'disabled' : '' %>>
+            <i class="fas fa-check-circle"></i> Confirm Purchase
+          </button>
+          <div id="confirmMessage" class="mt-2 text-green-600 font-semibold hidden">Purchase confirmed</div>
+        </div>
+
+        <button type="submit" id="generate-bill-btn" onclick="document.querySelector('input[name=\'action\']').value='generate'" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 <%= !confirmed ? 'opacity-50 cursor-not-allowed' : '' %>" <%= !confirmed ? 'disabled' : '' %>><i class="fas fa-check"></i> Generate Bill</button>
       </form>
 
       <% if (generated) { %>
@@ -61,6 +70,44 @@
       <% } %>
 
       <script>
+        async function confirmPurchase() {
+            const confirmBtn = document.getElementById('confirm-purchase-btn');
+            const billBtn = document.getElementById('generate-bill-btn');
+            const patientName = document.getElementById('patientName').value;
+            const confirmMsg = document.getElementById('confirmMessage');
+
+            confirmBtn.disabled = true;
+            confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                const response = await fetch('/generate-receipts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ action: 'confirm', patientName: patientName })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    confirmMsg.classList.remove('hidden');
+                    billBtn.disabled = false;
+                    billBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    alert('Error confirming purchase: ' + result.message);
+                    confirmBtn.disabled = false; // Re-enable on failure
+                    confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            } catch (error) {
+                console.error('Error confirming purchase:', error);
+                alert('An error occurred. Please try again.');
+                confirmBtn.disabled = false; // Re-enable on failure
+                confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
         function printReceipt() {
           // Open the PDF in a new window and print it
           const printWindow = window.open('/download-pdf', '_blank');

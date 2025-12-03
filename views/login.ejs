@@ -6,17 +6,16 @@
 <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 via-white to-gray-200 relative overflow-hidden p-6">
 
   <!-- Subtle background color blobs -->
-  <div class="absolute w-80 h-80 bg-indigo-300 rounded-full blur-3xl opacity-30 -top-20 -left-20 animate-float-slow"></div>
-  <div class="absolute w-96 h-96 bg-pink-300 rounded-full blur-3xl opacity-30 -bottom-24 -right-24 animate-float-reverse"></div>
+  <div class="absolute w-80 h-80 bg-indigo-300 rounded-full blur-3xl opacity-30 -top-20 -left-20"></div>
+  <div class="absolute w-96 h-96 bg-pink-300 rounded-full blur-3xl opacity-30 -bottom-24 -right-24"></div>
 
   <!-- Login card wrapper -->
-  <div class="relative z-10 w-full max-w-md">
-    <div class="glow-border">
-      <div class="card-content rounded-2xl p-8 shadow-2xl backdrop-blur-xl bg-slate-900/85 border border-slate-800 text-gray-100 relative z-10">
-        <div class="text-center">
-          <div class="mx-auto h-16 w-16 bg-gradient-to-r from-indigo-500 to-pink-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg animate-float">
-            <i class="fas fa-pills text-3xl text-white drop-shadow-lg"></i>
-          </div>
+  <div class="relative z-10 w-full max-w-md p-0.5 rounded-2xl bg-gradient-to-br from-indigo-500/50 via-purple-500/50 to-pink-500/50 shadow-2xl transition-all duration-300 hover:scale-[1.01] hover:shadow-indigo-500/30">
+    <div class="card-content rounded-2xl p-8 backdrop-blur-xl bg-slate-900/85 border border-slate-800 text-gray-100 relative z-10">
+      <div class="text-center">
+        <div class="mx-auto h-16 w-16 bg-gradient-to-r from-indigo-500 to-pink-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+          <i class="fas fa-pills text-3xl text-white drop-shadow-lg"></i>
+        </div>
           <h2 class="text-3xl font-extrabold mb-1 text-white">Community<span class="text-indigo-400">Pharmacy</span></h2>
           <p class="text-gray-400 text-sm">Sign in to your account</p>
         </div>
@@ -69,48 +68,7 @@
   </div>
 </div>
 
-<!-- 💫 CSS -->
-<style>
 
-  /* === OUTER MOVING BORDER === */
-  .glow-border {
-    position: relative;
-    border-radius: 1.25rem;
-    isolation: isolate; /* ensures pseudo-element stays behind */
-  }
-
-  .glow-border::before {
-    content: "";
-    position: absolute;
-    inset: -4px; /* sits outside the form */
-    border-radius: inherit;
-    background: linear-gradient(
-      90deg,
-      #020c22,
-      #f97316,
-      #020e29
-    );
-    background-size: 300% 300%;
-    animation: borderMove 6s linear infinite;
-    filter: blur(3px) brightness(1.0);
-    z-index: -1;
-  }
-
-  @keyframes borderMove {
-    0% { background-position: 0% 0%; }
-    25% { background-position: 100% 0%; }
-    50% { background-position: 100% 100%; }
-    75% { background-position: 0% 100%; }
-    100% { background-position: 0% 0%; }
-  }
-
-  /* Inner card */
-  .card-content {
-    position: relative;
-    border-radius: calc(1.25rem - 4px);
-    z-index: 2;
-  }
-</style>
 
 <!-- Password toggle -->
 <script>

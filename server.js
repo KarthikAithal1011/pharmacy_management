@@ -140,6 +140,13 @@ app.get('/view-dashboard', (req, res) => {
   }
 });
 
+app.get('/cart-view', (req, res) => {
+  if (!req.session.loggedin) {
+    return res.status(401).send('Not logged in');
+  }
+  res.render('_cart', { purchases: req.session.purchases || [], layout: false });
+});
+
 app.get('/add-stock', (req, res) => {
   if (req.session.loggedin) {
     // Fetch from stock_available table
@@ -166,39 +173,41 @@ app.get('/add-medicine', (req, res) => {
 
 app.post('/add-to-cart', (req, res) => {
   if (!req.session.loggedin) {
-    return res.redirect('/');
+    return res.status(401).json({ success: false, message: 'Not logged in' });
   }
   const { medicine, quantity } = req.body;
   const qty = parseInt(quantity);
   if (isNaN(qty) || qty <= 0) {
-    return res.redirect('/menu?error=Invalid quantity');
+    return res.status(400).json({ success: false, message: 'Invalid quantity' });
   }
-  // Store form data in session for retention
-  req.session.formData = { medicine, quantity };
-  // Check if medicine exists and get tablets per strip and stock (but don't deduct stock yet)
+
   db.query('SELECT tablets_in_a_strip, stock, tablets_used_in_current_strip FROM stock_available WHERE medicine = ?', [medicine], (err, results) => {
-    if (err) throw err;
+    if (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: 'Database error' });
+    }
     if (results.length === 0) {
-      return res.redirect('/menu?error=Medicine not found');
+      return res.status(400).json({ success: false, message: 'Medicine not found' });
     }
     if (results[0].stock <= 0) {
-      return res.redirect('/menu?cartError=Medicine out of stock');
+      return res.status(400).json({ success: false, message: 'Medicine out of stock' });
     }
     const tabletsInStrip = results[0].tablets_in_a_strip;
     const stock = results[0].stock;
     const tabletsUsed = results[0].tablets_used_in_current_strip || 0;
     const totalAvailableTablets = (stock * tabletsInStrip) - tabletsUsed;
     if (qty > totalAvailableTablets) {
-      return res.redirect('/menu?cartError=Entered quantity more than available quantity');
+      return res.status(400).json({ success: false, message: 'Entered quantity more than available quantity' });
     }
-    // Initialize purchases array if not exists
     if (!req.session.purchases) {
       req.session.purchases = [];
     }
-    // Add purchase to session (without deducting stock yet)
-    req.session.purchases.push({ medicine, quantity: qty });
-    req.session.formData = {}; // Clear form data after successful add to cart
-    res.redirect('/view-dashboard?success=Added to cart');
+    
+    const newPurchase = { medicine, quantity: qty };
+    req.session.purchases.push(newPurchase);
+    req.session.formData = {};
+    
+    res.json({ success: true, message: 'Added to cart' });
   });
 });
 
@@ -228,144 +237,11 @@ app.post('/buy', (req, res) => {
     return res.redirect('/menu');
   }
 
-  // Deduct stock for all purchases - only deduct complete strips when equivalent tablets are bought
-  let errors = [];
-  let completed = 0;
-  req.session.purchases.forEach((purchase, index) => {
-    db.query('SELECT stock, tablets_in_a_strip, tablets_used_in_current_strip FROM stock_available WHERE medicine = ?', [purchase.medicine], (err, results) => {
-      if (err) {
-        errors.push(`Error checking stock for ${purchase.medicine}`);
-        return;
-      }
-      if (results.length === 0) {
-        errors.push(`Medicine ${purchase.medicine} not found`);
-        return;
-      }
-      const currentStock = results[0].stock;
-      const tabletsInStrip = results[0].tablets_in_a_strip;
-      const tabletsUsedInCurrentStrip = results[0].tablets_used_in_current_strip || 0;
+  // Store purchases for receipt generation and confirmation
+  req.session.receiptPurchases = req.session.purchases.slice();
 
-      // Calculate total available tablets
-      const tabletsAvailableInCurrentStrip = tabletsInStrip - tabletsUsedInCurrentStrip;
-      const tabletsAvailableInFullStrips = currentStock * tabletsInStrip;
-      const totalTabletsAvailable = tabletsAvailableInCurrentStrip + tabletsAvailableInFullStrips;
-
-      if (totalTabletsAvailable < purchase.quantity) {
-        errors.push(`Insufficient stock for ${purchase.medicine}`);
-        return;
-      }
-
-      let tabletsToProcess = purchase.quantity;
-      let newStock = currentStock;
-      let newTabletsUsedInCurrentStrip = tabletsUsedInCurrentStrip;
-
-      // Add the purchased tablets to the used counter
-      newTabletsUsedInCurrentStrip += tabletsToProcess;
-
-      // Check if we've completed any full strips
-      const completeStripsToDeduct = Math.floor(newTabletsUsedInCurrentStrip / tabletsInStrip);
-      if (completeStripsToDeduct > 0) {
-        newStock -= completeStripsToDeduct;
-        newTabletsUsedInCurrentStrip = newTabletsUsedInCurrentStrip % tabletsInStrip;
-      }
-
-      // Update the database
-      db.query('UPDATE stock_available SET stock = ?, tablets_used_in_current_strip = ? WHERE medicine = ?',
-        [newStock, newTabletsUsedInCurrentStrip, purchase.medicine], (err) => {
-        if (err) {
-          errors.push(`Error updating stock for ${purchase.medicine}`);
-          return;
-        }
-        completed++;
-        if (completed === req.session.purchases.length) {
-          if (errors.length > 0) {
-            return res.redirect('/view-dashboard?error=' + encodeURIComponent(errors.join(', ')));
-          }
-          req.session.formData = {}; // Clear form data after successful purchase
-          req.session.receiptPurchases = req.session.purchases.slice(); // Store for receipts
-
-          // Insert transaction record for daily collection
-          const purchases = req.session.receiptPurchases;
-          if (purchases.length > 0) {
-            let processedPurchases = [];
-            let calcCompleted = 0;
-
-            purchases.forEach((purchase, index) => {
-              db.query('SELECT price_per_strip, tablets_in_a_strip FROM stock_available WHERE medicine = ?', [purchase.medicine], (err, results) => {
-                if (err) {
-                  console.error('Error fetching price for transaction:', err);
-                  return;
-                }
-                if (results.length > 0) {
-                  const pricePerStrip = results[0].price_per_strip;
-                  const tabletsInStrip = results[0].tablets_in_a_strip;
-                  const pricePerTablet = pricePerStrip / tabletsInStrip;
-                  const total = purchase.quantity * pricePerTablet;
-
-                  processedPurchases.push({
-                    medicine: purchase.medicine,
-                    quantity: purchase.quantity,
-                    pricePerTablet: pricePerTablet,
-                    total: total
-                  });
-                }
-
-                calcCompleted++;
-                if (calcCompleted === purchases.length) {
-                  let grandTotal = processedPurchases.reduce((sum, p) => sum + p.total, 0);
-                  let discountPercent = 0;
-                  if (grandTotal > 1000) discountPercent = 15;
-                  else if (grandTotal > 500) discountPercent = 5;
-                  else if (grandTotal > 200) discountPercent = 3;
-                  let discountAmount = grandTotal * discountPercent / 100;
-                  let discountedTotal = grandTotal - discountAmount;
-
-                  // Update or insert daily collection record
-                  const today = new Date();
-                  const dateStr = today.toISOString().split('T')[0];
-
-                  // First, check if a record for today exists
-                  db.query('SELECT * FROM transactions WHERE date = ?', [dateStr], (err, results) => {
-                    if (err) {
-                      console.error('Error checking daily collection:', err);
-                      return res.redirect('/receipts');
-                    }
-
-                    if (results.length > 0) {
-                      // Update existing record
-                      const currentBefore = parseFloat(results[0].total_before_discount) || 0;
-                      const currentAfter = parseFloat(results[0].total_after_discount) || 0;
-
-                      db.query('UPDATE transactions SET total_before_discount = ?, total_after_discount = ? WHERE date = ?',
-                        [currentBefore + grandTotal, currentAfter + discountedTotal, dateStr], (err) => {
-                        if (err) {
-                          console.error('Error updating daily collection:', err);
-                        }
-                        // Continue to receipts regardless
-                        res.redirect('/receipts');
-                      });
-                    } else {
-                      // Insert new record
-                      db.query('INSERT INTO transactions (date, total_before_discount, total_after_discount) VALUES (?, ?, ?)',
-                        [dateStr, grandTotal, discountedTotal], (err) => {
-                        if (err) {
-                          console.error('Error inserting daily collection:', err);
-                        }
-                        // Continue to receipts regardless
-                        res.redirect('/receipts');
-                      });
-                    }
-                  });
-                }
-              });
-            });
-          } else {
-            res.redirect('/receipts');
-          }
-        }
-      });
-    });
-  });
+  // Redirect to receipts page for confirmation
+  res.redirect('/receipts');
 });
 
 app.post('/add-stock', (req, res) => {
@@ -451,14 +327,16 @@ app.get('/receipts', (req, res) => {
             else if (grandTotal > 200) discountPercent = 3;
             let discountAmount = grandTotal * discountPercent / 100;
             let discountedTotal = grandTotal - discountAmount;
-            res.render('receipts', {
-              purchases: processedPurchases,
-              grandTotal: grandTotal,
-              discountPercent: discountPercent,
-              discountAmount: discountAmount,
-              discountedTotal: discountedTotal,
-              generated: req.query.generated === 'true'
-            });
+          res.render('receipts', {
+            purchases: processedPurchases,
+            grandTotal: grandTotal,
+            discountPercent: discountPercent,
+            discountAmount: discountAmount,
+            discountedTotal: discountedTotal,
+            generated: req.query.generated === 'true',
+            confirmed: req.query.confirmed === 'true',
+            patientName: req.session.patientName || ''
+          });
           }
           return;
         }
@@ -492,7 +370,9 @@ app.get('/receipts', (req, res) => {
             discountPercent: discountPercent,
             discountAmount: discountAmount,
             discountedTotal: discountedTotal,
-            generated: req.query.generated === 'true'
+            generated: req.query.generated === 'true',
+            confirmed: req.query.confirmed === 'true',
+            patientName: req.session.patientName || ''
           });
         }
       });
@@ -504,19 +384,143 @@ app.get('/receipts', (req, res) => {
       discountPercent: 0,
       discountAmount: 0,
       discountedTotal: 0,
-      generated: req.query.generated === 'true'
+      generated: req.query.generated === 'true',
+      confirmed: req.query.confirmed === 'true',
+      patientName: req.session.patientName || ''
     });
   }
 });
 
 app.post('/generate-receipts', (req, res) => {
-  if (!req.session.loggedin || !req.session.receiptPurchases) {
+  if (!req.session.loggedin) {
+    // For AJAX, send a JSON error. For others, redirect.
+    if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+      return res.status(401).json({ success: false, message: 'Not logged in' });
+    }
     return res.redirect('/');
   }
-  const { patientName } = req.body;
+
+  const { patientName, action } = req.body;
   req.session.patientName = patientName;
 
-  res.redirect('/receipts?generated=true');
+  if (action === 'generate') {
+    return res.redirect('/receipts?generated=true');
+  }
+
+  if (action === 'confirm') {
+    const purchases = req.session.receiptPurchases;
+    if (!purchases || purchases.length === 0) {
+      return res.status(400).json({ success: false, message: 'No items to purchase.' });
+    }
+
+    let validationErrors = [];
+    let validationCompleted = 0;
+
+    purchases.forEach((purchase) => {
+      db.query('SELECT stock, tablets_in_a_strip, tablets_used_in_current_strip FROM stock_available WHERE medicine = ?', [purchase.medicine], (err, results) => {
+        if (err) {
+          validationErrors.push(`DB error checking stock for ${purchase.medicine}`);
+        } else if (results.length === 0) {
+          validationErrors.push(`Medicine ${purchase.medicine} not found`);
+        } else {
+          const { stock, tablets_in_a_strip, tablets_used_in_current_strip } = results[0];
+          const totalAvailableTablets = (stock * tablets_in_a_strip) - (tablets_used_in_current_strip || 0);
+          if (totalAvailableTablets < purchase.quantity) {
+            validationErrors.push(`Insufficient stock for ${purchase.medicine}`);
+          }
+        }
+        validationCompleted++;
+
+        if (validationCompleted === purchases.length) {
+          if (validationErrors.length > 0) {
+            return res.status(400).json({ success: false, message: validationErrors.join(', ') });
+          }
+
+          // Validation passed, proceed to update stock
+          let updateErrors = [];
+          let updatesCompleted = 0;
+          purchases.forEach((p) => {
+            db.query('SELECT stock, tablets_in_a_strip, tablets_used_in_current_strip FROM stock_available WHERE medicine = ?', [p.medicine], (err, selectResults) => {
+              if (err) {
+                updateErrors.push(`Error re-fetching stock for ${p.medicine}`);
+                updatesCompleted++;
+                if(updatesCompleted === purchases.length) {
+                   return res.status(500).json({ success: false, message: updateErrors.join(', ') });
+                }
+                return;
+              }
+              
+              const { stock, tablets_in_a_strip, tablets_used_in_current_strip } = selectResults[0];
+              let newStock = stock;
+              let newTabletsUsed = (tablets_used_in_current_strip || 0) + p.quantity;
+              const stripsToDeduct = Math.floor(newTabletsUsed / tablets_in_a_strip);
+
+              if (stripsToDeduct > 0) {
+                newStock -= stripsToDeduct;
+                newTabletsUsed %= tablets_in_a_strip;
+              }
+
+              db.query('UPDATE stock_available SET stock = ?, tablets_used_in_current_strip = ? WHERE medicine = ?', [newStock, newTabletsUsed, p.medicine], (updateErr) => {
+                if (updateErr) {
+                  updateErrors.push(`Error updating stock for ${p.medicine}`);
+                }
+                updatesCompleted++;
+                if (updatesCompleted === purchases.length) {
+                   if (updateErrors.length > 0) {
+                        return res.status(500).json({ success: false, message: updateErrors.join(', ') });
+                   }
+
+                   // Stock update successful, now record transaction
+                    let priceErrors = [];
+                    let priceCompleted = 0;
+                    let processedPurchases = [];
+                    purchases.forEach(purchaseItem => {
+                        db.query('SELECT price_per_strip, tablets_in_a_strip FROM stock_available WHERE medicine = ?', [purchaseItem.medicine], (priceErr, priceResults) => {
+                            if (priceErr || priceResults.length === 0) {
+                                priceErrors.push(`Could not fetch price for ${purchaseItem.medicine}`);
+                            } else {
+                                const { price_per_strip, tablets_in_a_strip } = priceResults[0];
+                                const pricePerTablet = price_per_strip / tablets_in_a_strip;
+                                processedPurchases.push({ ...purchaseItem, total: purchaseItem.quantity * pricePerTablet });
+                            }
+                            priceCompleted++;
+                            if (priceCompleted === purchases.length) {
+                                if (priceErrors.length > 0) {
+                                    return res.status(500).json({ success: false, message: priceErrors.join(', ') });
+                                }
+
+                                let grandTotal = processedPurchases.reduce((sum, item) => sum + item.total, 0);
+                                let discountPercent = 0;
+                                if (grandTotal > 1000) discountPercent = 15;
+                                else if (grandTotal > 500) discountPercent = 5;
+                                else if (grandTotal > 200) discountPercent = 3;
+                                let discountAmount = grandTotal * discountPercent / 100;
+                                let discountedTotal = grandTotal - discountAmount;
+                                
+                                const receiptId = `RCP-${new Date().getTime()}`;
+                                const customerName = req.session.patientName || 'Walk-in Customer';
+                                const dateStr = new Date().toISOString().split('T')[0];
+                                
+                                db.query('INSERT INTO receipts (receipt_id, customer_name, date, total_after_discount) VALUES (?, ?, ?, ?)', [receiptId, customerName, dateStr, discountedTotal], (insertErr) => {
+                                    if (insertErr) {
+                                        return res.status(500).json({ success: false, message: 'Error inserting receipt record.' });
+                                    }
+                                    req.session.purchases = [];
+                                    res.json({ success: true, message: 'Purchase confirmed' });
+                                });
+                            }
+                        });
+                    });
+                }
+              });
+            });
+          });
+        }
+      });
+    });
+  } else {
+    res.redirect('/receipts');
+  }
 });
 
 app.get('/download-pdf', (req, res) => {
@@ -683,46 +687,112 @@ app.get('/daily-collection', (req, res) => {
     return res.redirect('/');
   }
 
-  // Get today's date in YYYY-MM-DD format for query
   const today = new Date();
-  const dateStr = today.toISOString().split('T')[0];
+  const todayStr = today.toISOString().split('T')[0];
 
-  // Format date for display as DD MM YYYY
-  const day = String(today.getDate()).padStart(2, '0');
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const year = today.getFullYear();
-  const formattedDate = `${day}-${month}-${year}`;
-
-  // Query to get daily collection summary
-  // Sum total_before_discount and total_after_discount for today
   const query = `
     SELECT
-      total_before_discount AS totalBeforeDiscount,
-      total_after_discount AS totalAfterDiscount
-    FROM transactions
-    WHERE date = ?
+        SUM(total_before) AS totalBeforeDiscount,
+        SUM(total_after) AS totalAfterDiscount
+    FROM (
+        SELECT total_after_discount AS total_before, total_after_discount AS total_after FROM receipts WHERE date = ?
+        UNION ALL
+        SELECT total_before_discount AS total_before, total_after_discount AS total_after FROM transactions WHERE date = ?
+            AND NOT EXISTS (SELECT 1 FROM receipts r WHERE r.date = transactions.date)
+    ) AS combined_sales
   `;
 
-  db.query(query, [dateStr], (err, results) => {
+  db.query(query, [todayStr, todayStr], (err, results) => {
     if (err) {
-      console.error('Error fetching daily collection:', err);
-      return res.render('daily_collection', {
-        date: formattedDate,
-        totalBeforeDiscount: 0,
-        totalAfterDiscount: 0
-      });
+      console.error('Error fetching today\'s collection:', err);
+      return res.status(500).send('Error fetching sales data');
     }
-
-    const data = results[0] || {
-      totalBeforeDiscount: 0,
-      totalAfterDiscount: 0
-    };
+    const todayFormatted = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const todayTotalAfter = parseFloat(results[0] ? results[0].totalAfterDiscount || 0 : 0);
+    const todayTotalBefore = parseFloat(results[0] ? results[0].totalBeforeDiscount || 0 : 0);
 
     res.render('daily_collection', {
-      date: formattedDate,
-      totalBeforeDiscount: Number(data.totalBeforeDiscount) || 0,
-      totalAfterDiscount: Number(data.totalAfterDiscount) || 0
+      todayDate: todayFormatted,
+      todayTotalAfter: todayTotalAfter,
+      todayTotalBefore: todayTotalBefore
     });
+  });
+});
+
+// API route for daily collection
+app.get('/api/daily-collection/:date', (req, res) => {
+  if (!req.session.loggedin) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  const selectedDate = req.params.date;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) {
+      return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
+  }
+
+  const query = `
+    SELECT
+        SUM(total_before) AS totalBeforeDiscount,
+        SUM(total_after) AS totalAfterDiscount
+    FROM (
+        SELECT total_after_discount AS total_before, total_after_discount AS total_after FROM receipts WHERE date = ?
+        UNION ALL
+        SELECT total_before_discount AS total_before, total_after_discount AS total_after FROM transactions WHERE date = ?
+            AND NOT EXISTS (SELECT 1 FROM receipts r WHERE r.date = transactions.date)
+    ) AS combined_sales
+  `;
+  db.query(query, [selectedDate, selectedDate], (err, results) => {
+    if (err) {
+      console.error('Error fetching collection for API:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    const totalAfter = parseFloat(results[0] ? results[0].totalAfterDiscount || 0 : 0);
+    const totalBefore = parseFloat(results[0] ? results[0].totalBeforeDiscount || 0 : 0);
+    
+    res.json({
+      date: selectedDate,
+      totalAfterDiscount: totalAfter,
+      totalBeforeDiscount: totalBefore
+    });
+  });
+});
+
+app.get('/detailed-sales', (req, res) => {
+  if (!req.session.loggedin) {
+    return res.redirect('/');
+  }
+
+  // Initial load, render with no sales data or date
+  res.render('detailed_sales', {
+    username: req.session.username,
+    showNav: true
+  });
+});
+
+app.get('/api/detailed-sales/:date', (req, res) => {
+  if (!req.session.loggedin) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  const selectedDate = req.params.date;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) {
+      return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
+  }
+
+  const query = `
+    (SELECT id, receipt_id, customer_name, date, total_after_discount FROM receipts WHERE date = ?)
+    UNION ALL
+    (SELECT id, receipt_number as receipt_id, 'Migrated Daily Total' as customer_name, date, total_after_discount FROM transactions WHERE date = ?
+        AND NOT EXISTS (SELECT 1 FROM receipts r WHERE r.date = transactions.date)
+    )
+    ORDER BY id DESC
+  `;
+  db.query(query, [selectedDate, selectedDate], (err, results) => {
+    if (err) {
+      console.error('Error fetching detailed sales for API:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    res.json(results);
   });
 });
 
@@ -1040,24 +1110,13 @@ app.post('/api/v1/cart/checkout', authenticateToken, (req, res) => {
                 const today = new Date();
                 const dateStr = today.toISOString().split('T')[0];
 
-                db.query('SELECT * FROM transactions WHERE date = ?', [dateStr], (err, results) => {
-                  if (err) {
-                    console.error('Error checking daily collection:', err);
-                    return res.status(500).json({ error: 'Database error' });
-                  }
-
-                  if (results.length > 0) {
-                    const currentBefore = parseFloat(results[0].total_before_discount) || 0;
-                    const currentAfter = parseFloat(results[0].total_after_discount) || 0;
-
-                    db.query('UPDATE transactions SET total_before_discount = ?, total_after_discount = ? WHERE date = ?',
-                      [currentBefore + grandTotal, currentAfter + discountedTotal, dateStr], (err) => {
-                      if (err) {
-                        console.error('Error updating daily collection:', err);
-                        return res.status(500).json({ error: 'Database error' });
-                      }
-                      req.session.receiptPurchases = purchases.slice();
-                      res.json({
+                const receiptNumber = `RCP-${new Date().getTime()}`;
+                db.query('INSERT INTO transactions (receipt_number, date, total_before_discount, total_after_discount) VALUES (?, ?, ?, ?)', [receiptNumber, dateStr, grandTotal, discountedTotal], (insertErr) => {
+                    if (insertErr) {
+                        return res.status(500).json({ success: false, message: 'Error inserting transaction record.' });
+                    }
+                    req.session.purchases = [];
+                    res.json({
                         message: 'Purchase completed successfully',
                         receipt: {
                           purchases: processedPurchases,
@@ -1067,27 +1126,6 @@ app.post('/api/v1/cart/checkout', authenticateToken, (req, res) => {
                           discountedTotal
                         }
                       });
-                    });
-                  } else {
-                    db.query('INSERT INTO transactions (date, total_before_discount, total_after_discount) VALUES (?, ?, ?)',
-                      [dateStr, grandTotal, discountedTotal], (err) => {
-                      if (err) {
-                        console.error('Error inserting daily collection:', err);
-                        return res.status(500).json({ error: 'Database error' });
-                      }
-                      req.session.receiptPurchases = purchases.slice();
-                      res.json({
-                        message: 'Purchase completed successfully',
-                        receipt: {
-                          purchases: processedPurchases,
-                          grandTotal,
-                          discountPercent,
-                          discountAmount,
-                          discountedTotal
-                        }
-                      });
-                    });
-                  }
                 });
               }
             });
