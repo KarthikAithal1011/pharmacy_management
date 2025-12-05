@@ -456,14 +456,23 @@
       document.getElementById('searchButton').addEventListener('click', function() {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const rows = document.querySelectorAll('.medicine-row');
+        
+        // First, ensure all rows are visible to the filter logic by removing the 'hidden-medicine' class.
+        rows.forEach(row => {
+          row.classList.remove('hidden-medicine');
+        });
+
+        // Now, filter based on the search term
         rows.forEach(row => {
           const medicineName = row.cells[0].textContent.toLowerCase();
           if (medicineName.includes(searchTerm)) {
-            row.style.display = '';
+            row.style.display = ''; // Show matching rows
           } else {
-            row.style.display = 'none';
+            row.style.display = 'none'; // Hide non-matching rows
           }
         });
+
+        // Hide the "Show More" link as the view is now filtered
         const showMoreContainer = document.getElementById('show-more-container');
         if (showMoreContainer) {
             showMoreContainer.style.display = 'none';

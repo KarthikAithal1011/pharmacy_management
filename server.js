@@ -257,18 +257,33 @@ app.post('/add-to-cart', (req, res) => {
     const stock = results[0].stock;
     const tabletsUsed = results[0].tablets_used_in_current_strip || 0;
     const totalAvailableTablets = (stock * tabletsInStrip) - tabletsUsed;
-    if (qty > totalAvailableTablets) {
-      return res.status(400).json({ success: false, message: 'Entered quantity more than available quantity' });
-    }
+
     if (!req.session.purchases) {
       req.session.purchases = [];
     }
+
+    const existingPurchaseIndex = req.session.purchases.findIndex(p => p.medicine === medicine);
+    let newTotalQuantity = qty;
+
+    if (existingPurchaseIndex > -1) {
+      newTotalQuantity += req.session.purchases[existingPurchaseIndex].quantity;
+    }
+
+    // Check against total available tablets
+    if (newTotalQuantity > totalAvailableTablets) {
+      return res.status(400).json({ success: false, message: 'Total quantity exceeds available stock.' });
+    }
+
+    // If validation passes, update or add the item
+    if (existingPurchaseIndex > -1) {
+      req.session.purchases[existingPurchaseIndex].quantity = newTotalQuantity;
+    } else {
+      req.session.purchases.push({ medicine, quantity: qty });
+    }
     
-    const newPurchase = { medicine, quantity: qty };
-    req.session.purchases.push(newPurchase);
     req.session.formData = {};
     
-    res.json({ success: true, message: 'Added to cart' });
+    res.json({ success: true, message: 'Cart updated' });
   });
 });
 
@@ -751,7 +766,8 @@ app.get('/detailed-sales', (req, res) => {
   // Initial load, render with no sales data or date
   res.render('detailed_sales', {
     username: req.session.username,
-    showNav: true
+    showNav: true,
+    pageTitle: 'Detailed Sales'
   });
 });
 
