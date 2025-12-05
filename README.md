@@ -18,7 +18,7 @@ Stock Management:
   - Option to download the receipt as a PDF.
 - Reporting:
   - Tracks and displays the total sales collection for the day.
-- 
+- View both detailed daily sales and daily summarized sale.
 
 
 Technologies Used:
